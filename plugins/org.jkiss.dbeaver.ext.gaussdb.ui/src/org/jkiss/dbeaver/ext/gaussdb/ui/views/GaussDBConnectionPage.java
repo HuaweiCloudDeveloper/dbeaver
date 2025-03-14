@@ -50,6 +50,10 @@ import java.util.Locale;
 
 /**
  * GaussDBConnectionPage
+ *
+ * @author Acewuye 2025/03/14
+ *
+ * Notes: Fix the issue of automatic input synchronization on the GaussDB connection management page.
  */
 public class GaussDBConnectionPage extends ConnectionPageWithAuth implements IDialogPageProvider {
 
@@ -215,12 +219,16 @@ public class GaussDBConnectionPage extends ConnectionPageWithAuth implements IDi
         setupConnectionModeSelection(urlText, useURL, GROUP_CONNECTION_ARR);
         updateUrl();
 
-        activated = false;
+        activated = true;
     }
 
     @Override
     public void saveSettings(DBPDataSourceContainer dataSource) {
         DBPConnectionConfiguration connectionInfo = dataSource.getConnectionConfiguration();
+        if (typeURLRadio != null) {
+            connectionInfo.setConfigurationType(
+                    typeURLRadio.getSelection() ? DBPDriverConfigurationType.URL : DBPDriverConfigurationType.MANUAL);
+        }
 
         if (hostText != null) {
             connectionInfo.setHostName(hostText.getText().trim());
@@ -230,6 +238,9 @@ public class GaussDBConnectionPage extends ConnectionPageWithAuth implements IDi
         }
         if (dbText != null) {
             connectionInfo.setDatabaseName(dbText.getText().trim());
+        }
+        if (typeURLRadio != null && typeURLRadio.getSelection()) {
+            connectionInfo.setUrl(urlText.getText());
         }
 
         super.saveSettings(dataSource);
@@ -244,6 +255,10 @@ public class GaussDBConnectionPage extends ConnectionPageWithAuth implements IDi
     private void updateUrl() {
         DBPDataSourceContainer dataSourceContainer = site.getActiveDataSource();
         saveSettings(dataSourceContainer);
-        urlText.setText(dataSourceContainer.getDriver().getConnectionURL(site.getActiveDataSource().getConnectionConfiguration()));
+        if (typeURLRadio != null && typeURLRadio.getSelection()) {
+            urlText.setText(dataSourceContainer.getConnectionConfiguration().getUrl());
+        } else {
+            urlText.setText(dataSourceContainer.getDriver().getConnectionURL(site.getActiveDataSource().getConnectionConfiguration()));
+        }
     }
 }
