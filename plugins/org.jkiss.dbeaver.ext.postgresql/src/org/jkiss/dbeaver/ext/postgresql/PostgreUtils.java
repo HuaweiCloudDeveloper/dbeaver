@@ -126,7 +126,7 @@ public class PostgreUtils {
         }
         String className = object.getClass().getName();
         return className.equals(PostgreConstants.PG_OBJECT_CLASS) ||
-        className.equals(PostgreConstants.GAUSSDB_PG_OBJECT_CLASS) ||
+            className.equals(PostgreConstants.GAUSSDB_PG_OBJECT_CLASS) ||
             className.equals(PostgreConstants.RS_OBJECT_CLASS) ||
             className.equals(PostgreConstants.EDB_OBJECT_CLASS);
     }
