@@ -87,7 +87,7 @@ public class PostgreConstants {
     public static final String OPTION_STANDARD_CONFORMING_STRINGS = "standard_conforming_strings";
 
     public static final String PG_OBJECT_CLASS = "org.postgresql.util.PGobject";
-	public static final String GAUSSDB_PG_OBJECT_CLASS = "com.huawei.gaussdb.jdbc.util.PGobject";
+    public static final String GAUSSDB_PG_OBJECT_CLASS = "com.huawei.gaussdb.jdbc.util.PGobject";
     public static final String PG_ARRAY_CLASS = "org.postgresql.jdbc.PgArray";
     public static final String PG_INTERVAL_CLASS = "org.postgresql.util.PGInterval";
     public static final String PG_GEOMETRY_CLASS = "org.postgis.PGgeometry";
