@@ -33,7 +33,7 @@
                         defaultPort="8000"
                         description="%driver.gaussdb.description"
                         categories="sql">
-                    <file type="jar" path="https://repo1.maven.org/maven2/com/huaweicloud/gaussdb/gaussdbjdbc/506.0.0.b058/gaussdbjdbc-506.0.0.b058.jar" bundle="!drivers.gaussdb"/>
+                    <file type="jar" path="maven:/com.huaweicloud.gaussdb:gaussdbjdbc:RELEASE[506.0.0.b058]" bundle="!drivers.gaussdb"/>
                     <file type="jar" path="drivers/gaussdb" bundle="drivers.gaussdb"/>
                     <parameter name="serverType" value="gaussdb"/>
                     <property name="loginTimeout" value="20"/>
