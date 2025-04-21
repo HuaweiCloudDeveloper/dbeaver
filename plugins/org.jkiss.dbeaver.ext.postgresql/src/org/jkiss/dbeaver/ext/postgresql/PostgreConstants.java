@@ -95,8 +95,8 @@ public class PostgreConstants {
     public static final String RS_OBJECT_CLASS = "com.amazon.redshift.util.RedshiftObject";
     // Workaround for EnterpriseDB
     public static final String EDB_OBJECT_CLASS = "com.edb.util.PGobject";
-	// Workaround for GaussDB
-	public static final String GAUSSDB_PG_OBJECT_CLASS = "com.huawei.gaussdb.jdbc.util.PGobject";
+    // Workaround for GaussDB
+    public static final String GAUSSDB_PG_OBJECT_CLASS = "com.huawei.gaussdb.jdbc.util.PGobject";
 
     public static final DBDPseudoAttribute PSEUDO_ATTR_OID = new DBDPseudoAttribute(
         DBDPseudoAttributeType.ROWID,
