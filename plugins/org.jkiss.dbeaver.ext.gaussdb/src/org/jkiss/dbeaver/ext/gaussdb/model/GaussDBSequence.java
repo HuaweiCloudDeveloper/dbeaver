@@ -44,36 +44,17 @@ public class GaussDBSequence extends PostgreSequence {
     public void loadAdditionalInfo(DBRProgressMonitor monitor) {
         AdditionalInfo additionalInfo = getAdditionalInfo();
         try (JDBCSession session = DBUtils.openMetaSession(monitor, this, "Load sequence additional info")) {
-            if (getDataSource().isServerVersionAtLeast(10, 0)) {
-                try (JDBCPreparedStatement dbSeqStat = session.prepareStatement(
-                        "SELECT * from pg_catalog.pg_sequences WHERE schemaname=? AND sequencename=?")) {
-                    dbSeqStat.setString(1, getSchema().getName());
-                    dbSeqStat.setString(2, getName());
-                    try (JDBCResultSet seqResults = dbSeqStat.executeQuery()) {
-                        if (seqResults.next()) {
-                            additionalInfo.setStartValue(JDBCUtils.safeGetLong(seqResults, "start_value"));
-                            additionalInfo.setLastValue(JDBCUtils.safeGetLongNullable(seqResults, "last_value"));
-                            additionalInfo.setMinValue(JDBCUtils.safeGetLong(seqResults, "min_value"));
-                            additionalInfo.setMaxValue(JDBCUtils.safeGetLong(seqResults, "max_value"));
-                            additionalInfo.setIncrementBy(JDBCUtils.safeGetLong(seqResults, "increment_by"));
-                            additionalInfo.setCacheValue(JDBCUtils.safeGetLong(seqResults, "cache_value"));
-                            additionalInfo.setCycled(JDBCUtils.safeGetBoolean(seqResults, "cycle"));
-                        }
-                    }
-                }
-            } else {
-                try (JDBCPreparedStatement dbSeqStat = session.prepareStatement(
-                        "SELECT * from " + getFullyQualifiedName(DBPEvaluationContext.DML))) {
-                    try (JDBCResultSet seqResults = dbSeqStat.executeQuery()) {
-                        if (seqResults.next()) {
-                            additionalInfo.setStartValue(JDBCUtils.safeGetLong(seqResults, "start_value"));
-                            additionalInfo.setLastValue(JDBCUtils.safeGetLongNullable(seqResults, "last_value"));
-                            additionalInfo.setMinValue(JDBCUtils.safeGetLong(seqResults, "min_value"));
-                            additionalInfo.setMaxValue(JDBCUtils.safeGetLong(seqResults, "max_value"));
-                            additionalInfo.setIncrementBy(JDBCUtils.safeGetLong(seqResults, "increment_by"));
-                            additionalInfo.setCacheValue(JDBCUtils.safeGetLong(seqResults, "cache_value"));
-                            additionalInfo.setCycled(JDBCUtils.safeGetBoolean(seqResults, "cycle"));
-                        }
+            try (JDBCPreparedStatement dbSeqStat = session.prepareStatement(
+                "SELECT * from " + getFullyQualifiedName(DBPEvaluationContext.DML))) {
+                try (JDBCResultSet seqResults = dbSeqStat.executeQuery()) {
+                    if (seqResults.next()) {
+                        additionalInfo.setStartValue(JDBCUtils.safeGetLong(seqResults, "start_value"));
+                        additionalInfo.setLastValue(JDBCUtils.safeGetLongNullable(seqResults, "last_value"));
+                        additionalInfo.setMinValue(JDBCUtils.safeGetLong(seqResults, "min_value"));
+                        additionalInfo.setMaxValue(JDBCUtils.safeGetLong(seqResults, "max_value"));
+                        additionalInfo.setIncrementBy(JDBCUtils.safeGetLong(seqResults, "increment_by"));
+                        additionalInfo.setCacheValue(JDBCUtils.safeGetLong(seqResults, "cache_value"));
+                        additionalInfo.setCycled(JDBCUtils.safeGetBoolean(seqResults, "is_cycled"));
                     }
                 }
             }
