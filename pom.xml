@@ -34,7 +34,7 @@
     <repositories>
         <repository>
             <id>local-contrib</id>
-            <url>${local-p2-repo.url}</url>
+            <url>${repo.p2.dbeaver-ce.url}</url>
             <layout>p2</layout>
         </repository>
     </repositories>
