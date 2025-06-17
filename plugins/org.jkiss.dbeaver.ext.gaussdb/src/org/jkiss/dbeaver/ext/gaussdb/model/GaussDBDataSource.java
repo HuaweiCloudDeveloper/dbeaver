@@ -29,7 +29,7 @@ import org.jkiss.utils.CommonUtils;
 
 import java.sql.ResultSet;
 
-public class GaussDBDataSource extends PostgreDataSource implements DatabaseCompatibilityProvider{
+public class GaussDBDataSource extends PostgreDataSource implements DatabaseCompatibilityProvider {
 
     private PostgreServerExtension serverExtension;
     
