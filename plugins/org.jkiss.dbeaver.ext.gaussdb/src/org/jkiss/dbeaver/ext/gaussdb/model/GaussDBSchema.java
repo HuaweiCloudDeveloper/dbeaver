@@ -310,7 +310,7 @@ public class GaussDBSchema extends PostgreSchema {
         } catch (DBException e) {
             log.error("Failed to get GaussDB compatibility mode", e);
             // Default non-M mode when abnormal
-            return false; // 异常时默认非M模式
+            return false;
         }
     }
 }
