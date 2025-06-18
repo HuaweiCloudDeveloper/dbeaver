@@ -24,11 +24,12 @@ import org.jkiss.dbeaver.ext.postgresql.model.*;
 import org.jkiss.dbeaver.model.DBPDataSourceContainer;
 import org.jkiss.dbeaver.model.connection.DBPConnectionConfiguration;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
+import org.jkiss.dbeaver.utils.DatabaseCompatibilityProvider;
 import org.jkiss.utils.CommonUtils;
 
 import java.sql.ResultSet;
 
-public class GaussDBDataSource extends PostgreDataSource {
+public class GaussDBDataSource extends PostgreDataSource implements DatabaseCompatibilityProvider {
 
     private PostgreServerExtension serverExtension;
     
@@ -79,5 +80,16 @@ public class GaussDBDataSource extends PostgreDataSource {
             serverExtension = new PostgreServerGaussDB(this);
         }
         return serverExtension;
+    }
+
+    @Override
+    protected void initializeRemoteInstance(@NotNull DBRProgressMonitor monitor) throws DBException {
+        super.initializeRemoteInstance(monitor);
+    }
+
+    @Override
+    public String getDatabaseCompatibleMode() throws DBException {
+        GaussDBDatabase database = (GaussDBDatabase) this.getDefaultInstance();
+        return database.getDatabaseCompatibleMode();
     }
 }
