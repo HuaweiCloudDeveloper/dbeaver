@@ -18,7 +18,10 @@
 package org.jkiss.dbeaver.ext.gaussdb.ui;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
@@ -32,6 +35,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.jkiss.dbeaver.DBException;
+import org.jkiss.dbeaver.ext.gaussdb.model.DBCompatibilityEnum;
 import org.jkiss.dbeaver.ext.gaussdb.model.GaussDBDataSource;
 import org.jkiss.dbeaver.ext.postgresql.PostgreMessages;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreCharset;
@@ -87,15 +91,7 @@ public class GaussDBCreateDatabaseDialog extends BaseDialog {
         supportsEncodings(supportsEncodings, groupDefinition);
         supportsTablespaces(supportsTablespaces, groupDefinition);
 
-        dbCompatibleMode = UIUtils.createLabelCombo(groupDefinition, "DataBase Compatibility Mode",
-            SWT.BORDER | SWT.DROP_DOWN | SWT.READ_ONLY);
-        dbCompatibleMode.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                compatibleMode = dbCompatibleMode.getText();
-            }
-        });
-
+        supportsCompatibleMode(true,groupDefinition);//对于GaussDB来说这个是支持选择兼容模式的
         scheduleLoadUsersJob(supportsRoles, supportsEncodings, supportsTablespaces);
 
         return composite;
@@ -165,7 +161,83 @@ public class GaussDBCreateDatabaseDialog extends BaseDialog {
             }
         }
     }
+    private void supportsCompatibleMode(boolean supportsCompatibleMode, final Composite groupDefinition) {
+        if (supportsCompatibleMode) {
+//            dbCompatibleMode = UIUtils.createLabelCombo(groupDefinition, "DataBase Compatibility Mode",
+//            SWT.BORDER | SWT.DROP_DOWN | SWT.READ_ONLY);
+//            dbCompatibleMode.addSelectionListener(new SelectionAdapter() {
+//                @Override
+//                public void widgetSelected(SelectionEvent e) {
+//                    compatibleMode = dbCompatibleMode.getText();
+//                }
+//            });
 
+    //            //直接把名称列出来
+    //// 创建 Combo 控件
+    //            dbCompatibleMode = UIUtils.createLabelCombo(groupDefinition, "DataBase Compatibility Mode",
+    //                SWT.BORDER | SWT.DROP_DOWN | SWT.READ_ONLY);
+    //
+    //            // 存储枚举对象与Combo项的映射
+    //            Map<String, DBCompatibilityEnum> modeMap = new HashMap<>();
+    //
+    //            // 获取所有兼容性枚举值并添加到Combo
+    //            DBCompatibilityEnum[] compatibilityModes = DBCompatibilityEnum.values();
+    //            for (DBCompatibilityEnum mode : compatibilityModes) {
+    //                dbCompatibleMode.add(mode.getText());
+    //                modeMap.put(mode.getText(), mode);
+    //            }
+    //
+    //            // 设置默认选中项（可选）
+    //            if (compatibilityModes.length > 0) {
+    //                dbCompatibleMode.select(0);
+    //                compatibleMode = dbCompatibleMode.getText();
+    //            }
+    //
+    //            // 添加选择监听器
+    //            dbCompatibleMode.addSelectionListener(new SelectionAdapter() {
+    //                @Override
+    //                public void widgetSelected(SelectionEvent e) {
+    //                    String selectedText = dbCompatibleMode.getText();
+    //                    compatibleMode = selectedText;
+    //
+    //                    // 如果需要获取枚举对象
+    //                    DBCompatibilityEnum selectedEnum = modeMap.get(selectedText);
+    //                    if (selectedEnum != null) {
+    //                        // 可以使用selectedEnum获取更多信息
+    //                        String cValue = selectedEnum.getcValue(); // 集中式值
+    //                        String dValue = selectedEnum.getdValue(); // 分布式值
+    //                    }
+    //                }
+    //            });
+                            // 创建 Combo 控件
+                dbCompatibleMode = UIUtils.createLabelCombo(groupDefinition, "DataBase Compatibility Mode",
+                    SWT.BORDER | SWT.DROP_DOWN | SWT.READ_ONLY);
+
+                // 获取所有兼容性枚举值
+                DBCompatibilityEnum[] compatibilityModes = DBCompatibilityEnum.values();
+
+                // 将枚举值添加到 Combo 控件中
+                for (DBCompatibilityEnum mode : compatibilityModes) {
+                    //dbCompatibleMode.add(mode.getText());
+                    //取cValue，而不是Text
+                    dbCompatibleMode.add(mode.getcValue());
+                }
+
+                // 设置默认选中项（可选）
+                if (compatibilityModes.length > 0) {
+                    dbCompatibleMode.select(0);
+                    compatibleMode = dbCompatibleMode.getText();
+                }
+
+                // 添加选择监听器
+                dbCompatibleMode.addSelectionListener(new SelectionAdapter() {
+                    @Override
+                    public void widgetSelected(SelectionEvent e) {
+                        compatibleMode = dbCompatibleMode.getText();
+                    }
+                });
+            }
+    }
     private void supportsTablespaces(boolean supportsTablespaces, final Composite groupDefinition) {
         if (supportsTablespaces) {
             tablespaceCombo = UIUtils.createLabelCombo(groupDefinition, PostgreMessages.dialog_create_db_label_tablesapce,
