@@ -72,8 +72,6 @@ public class BasicSQLDialect extends AbstractSQLDialect implements SQLDialectRel
             SQLConstants.KEYWORD_MERGE,
             SQLConstants.KEYWORD_UPSERT,
             SQLConstants.KEYWORD_TRUNCATE};
-    public static final String[][] DEFAULT_IDENTIFIER_QUOTES = {{"\"", "\""}};
-    public static final String[][] DEFAULT_STRING_QUOTES = {{"'", "'"}};
 
     private static final String[] COMMIT_KEYWORDS = { SQLConstants.KEYWORD_COMMIT };
     private static final String[] ROLLBACK_KEYWORDS = { SQLConstants.KEYWORD_ROLLBACK };

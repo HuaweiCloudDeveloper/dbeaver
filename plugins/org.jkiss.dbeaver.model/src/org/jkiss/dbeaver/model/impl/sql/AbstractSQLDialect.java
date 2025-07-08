@@ -59,6 +59,7 @@ public abstract class AbstractSQLDialect implements SQLDialect {
         Set.of(SQLConstants.KEYWORD_SELECT, "SHOW", "USE", "SET", SQLConstants.KEYWORD_EXPLAIN);
 
     public static final String[][] DEFAULT_IDENTIFIER_QUOTES = {{"\"", "\""}};
+    public static final String[][] MYSQL_IDENTIFIER_QUOTES = {{"`", "`"}};
     public static final String[][] DEFAULT_STRING_QUOTES = {{"'", "'"}};
     private static final String[][] DEFAULT_BEGIN_END_BLOCK = new String[0][];
     private static final String[] CORE_NON_TRANSACTIONAL_KEYWORDS = new String[0];
@@ -103,7 +104,11 @@ public abstract class AbstractSQLDialect implements SQLDialect {
     public String[][] getIdentifierQuoteStrings() {
         return DEFAULT_IDENTIFIER_QUOTES;
     }
-
+    @Nullable
+    @Override
+    public String[][] getIdentifierQuoteStringsForMySQL() {
+        return MYSQL_IDENTIFIER_QUOTES;
+    }
     @NotNull
     @Override
     public String[][] getStringQuoteStrings() {
@@ -453,6 +458,33 @@ public abstract class AbstractSQLDialect implements SQLDialect {
         }
 
         String[][] quoteStrings = this.getIdentifierQuoteStrings();
+        if (ArrayUtils.isEmpty(quoteStrings)) {
+            return str;
+        }
+
+        if (mustBeQuoted(str, forceCaseSensitive) || forceQuotes) {
+            return quoteIdentifier(str, quoteStrings);
+        } else {
+            return str;
+        }
+    }
+    @Override
+    public String getQuotedIdentifier(String str, boolean forceCaseSensitive, boolean forceQuotes,String databaseCompatibleMode) {
+        if (isQuotedIdentifier(str)) {
+            // Already quoted
+            return str;
+        }
+        String[][] quoteStrings;
+        if(!databaseCompatibleMode.isEmpty()&&"M".equals(databaseCompatibleMode)){
+            quoteStrings = this.getIdentifierQuoteStringsForMySQL();
+            forceCaseSensitive= false;
+        }
+        else{
+            quoteStrings = this.getIdentifierQuoteStrings();
+        }
+        if (ArrayUtils.isEmpty(quoteStrings)) {
+            return str;
+        }
         if (ArrayUtils.isEmpty(quoteStrings)) {
             return str;
         }

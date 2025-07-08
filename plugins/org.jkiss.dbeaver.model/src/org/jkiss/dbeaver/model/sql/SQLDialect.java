@@ -91,6 +91,9 @@ public interface SQLDialect {
     @Nullable
     String[][] getIdentifierQuoteStrings();
 
+    @Nullable
+    String[][] getIdentifierQuoteStringsForMySQL();
+
     /**
      * Retrieves strings used to quote SQL strings.
      *
@@ -353,8 +356,9 @@ public interface SQLDialect {
 
     boolean isQuotedIdentifier(String identifier);
 
-    String getQuotedIdentifier(String identifier, boolean forceCaseSensitive, boolean forceQuotes);
+    String getQuotedIdentifier(String identifier, boolean forceCaseSensitive, boolean forceQuotes,String databaseCompatibleMode);
 
+    String getQuotedIdentifier(String identifier, boolean forceCaseSensitive, boolean forceQuotes);
     /**
      * @param str - string that must be unquoted for this check - otherwise method will return true
      * @param forceCaseSensitive the level of case sensitivity

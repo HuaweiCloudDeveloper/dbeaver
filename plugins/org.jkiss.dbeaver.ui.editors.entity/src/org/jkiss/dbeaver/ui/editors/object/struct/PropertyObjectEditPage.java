@@ -105,8 +105,9 @@ public class PropertyObjectEditPage<OBJECT extends DBSObject> extends BaseObject
         nameText.addModifyListener(e -> {
             if (object instanceof DBPNamedObject2 && object.getDataSource() != null) {
                 String objectName = nameText.getText().trim();
-                final String transformed = DBObjectNameCaseTransformer.transformName(object.getDataSource(), objectName);
-                ((DBPNamedObject2) object).setName(transformed);
+//                final String transformed = DBObjectNameCaseTransformer.transformName(object.getDataSource(), objectName);
+//                ((DBPNamedObject2) object).setName(transformed);
+                ((DBPNamedObject2) object).setName(objectName);
                 validateProperties();
             }
         });

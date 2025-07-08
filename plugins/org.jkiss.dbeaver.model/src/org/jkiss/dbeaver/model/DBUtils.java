@@ -54,6 +54,7 @@ import org.jkiss.dbeaver.model.virtual.DBVUtils;
 import org.jkiss.dbeaver.runtime.DBServiceConnections;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.runtime.IVariableResolver;
+import org.jkiss.dbeaver.utils.DatabaseCompatibilityProvider;
 import org.jkiss.dbeaver.utils.GeneralUtils;
 import org.jkiss.dbeaver.utils.RuntimeUtils;
 import org.jkiss.utils.ArrayUtils;
@@ -153,9 +154,18 @@ public final class DBUtils {
 
     @NotNull
     public static String getQuotedIdentifier(@NotNull DBPDataSource dataSource, @NotNull String str, boolean caseSensitiveNames, boolean quoteAlways) {
-        return dataSource.getSQLDialect().getQuotedIdentifier(str, caseSensitiveNames, quoteAlways);
+        String compatibleMode="";
+        if (dataSource instanceof DatabaseCompatibilityProvider) {
+            DatabaseCompatibilityProvider ds = (DatabaseCompatibilityProvider) dataSource;
+            try {
+                compatibleMode=ds.getDatabaseCompatibleMode();
+            }
+            catch (DBException e){
+                log.error("Failed to get GaussDB compatibility mode", e);
+            }
+        }
+        return dataSource.getSQLDialect().getQuotedIdentifier(str, caseSensitiveNames, quoteAlways, compatibleMode);
     }
-
     @NotNull
     public static String getFullQualifiedName(@Nullable DBPDataSource dataSource, @NotNull DBPNamedObject... path) {
         StringBuilder name = new StringBuilder(20 * path.length);
