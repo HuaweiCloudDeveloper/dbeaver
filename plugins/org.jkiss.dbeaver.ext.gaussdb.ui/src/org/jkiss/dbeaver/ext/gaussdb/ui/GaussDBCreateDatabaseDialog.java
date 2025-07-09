@@ -91,7 +91,7 @@ public class GaussDBCreateDatabaseDialog extends BaseDialog {
         supportsEncodings(supportsEncodings, groupDefinition);
         supportsTablespaces(supportsTablespaces, groupDefinition);
 
-        supportsCompatibleMode(true,groupDefinition);//Support Compatible Mode When Creating Database
+        supportsCompatibleMode(groupDefinition);
         scheduleLoadUsersJob(supportsRoles, supportsEncodings, supportsTablespaces);
 
         return composite;
@@ -161,31 +161,31 @@ public class GaussDBCreateDatabaseDialog extends BaseDialog {
             }
         }
     }
+
     //Edited by JaredYe
-    private void supportsCompatibleMode(boolean supportsCompatibleMode, final Composite groupDefinition) {
-        if (supportsCompatibleMode) {
-                dbCompatibleMode = UIUtils.createLabelCombo(groupDefinition, "DataBase Compatibility Mode",
-                    SWT.BORDER | SWT.DROP_DOWN | SWT.READ_ONLY);
+    private void supportsCompatibleMode(final Composite groupDefinition) {
 
-                DBCompatibilityEnum[] compatibilityModes = DBCompatibilityEnum.values();
+        dbCompatibleMode = UIUtils.createLabelCombo(groupDefinition, "DataBase Compatibility Mode",
+            SWT.BORDER | SWT.DROP_DOWN | SWT.READ_ONLY);
 
-                for (DBCompatibilityEnum mode : compatibilityModes) {
-                    //dbCompatibleMode.add(mode.getText());
-                    //If you want to display full names, enable the code above, otherwise enable the code below.
-                    dbCompatibleMode.add(mode.getcValue());
-                }
-                if (compatibilityModes.length > 0) {
-                    dbCompatibleMode.select(0);
-                    compatibleMode = dbCompatibleMode.getText();
-                }
-                dbCompatibleMode.addSelectionListener(new SelectionAdapter() {
-                    @Override
-                    public void widgetSelected(SelectionEvent e) {
-                        compatibleMode = dbCompatibleMode.getText();
-                    }
-                });
+        DBCompatibilityEnum[] compatibilityModes = DBCompatibilityEnum.values();
+
+        for (DBCompatibilityEnum mode : compatibilityModes) {
+
+            dbCompatibleMode.add(mode.getcValue());
+        }
+        if (compatibilityModes.length > 0) {
+            dbCompatibleMode.select(0);
+            compatibleMode = dbCompatibleMode.getText();
+        }
+        dbCompatibleMode.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                compatibleMode = dbCompatibleMode.getText();
             }
+        });
     }
+
     private void supportsTablespaces(boolean supportsTablespaces, final Composite groupDefinition) {
         if (supportsTablespaces) {
             tablespaceCombo = UIUtils.createLabelCombo(groupDefinition, PostgreMessages.dialog_create_db_label_tablesapce,
