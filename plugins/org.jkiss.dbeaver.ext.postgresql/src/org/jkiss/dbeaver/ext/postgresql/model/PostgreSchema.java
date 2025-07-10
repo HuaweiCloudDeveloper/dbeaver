@@ -1079,7 +1079,7 @@ public class PostgreSchema implements
     /**
      * Index cache implementation
      */
-    public class IndexCache extends JDBCCompositeCache<PostgreTableContainer, PostgreTableBase, PostgreIndex, PostgreIndexColumn> {
+    class IndexCache extends JDBCCompositeCache<PostgreTableContainer, PostgreTableBase, PostgreIndex, PostgreIndexColumn> {
         protected IndexCache() {
             super(getTableCache(), PostgreTableBase.class, "tabrelname", "relname");
         }

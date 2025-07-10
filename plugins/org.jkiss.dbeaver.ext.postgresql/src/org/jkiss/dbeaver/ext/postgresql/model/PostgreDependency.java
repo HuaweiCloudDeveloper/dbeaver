@@ -28,7 +28,6 @@ import org.jkiss.dbeaver.model.impl.jdbc.JDBCUtils;
 import org.jkiss.dbeaver.model.meta.Property;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.struct.DBSObject;
-import org.jkiss.dbeaver.utils.DatabaseCompatibilityProvider;
 import org.jkiss.utils.CommonUtils;
 
 import java.util.ArrayList;
@@ -235,20 +234,6 @@ public class PostgreDependency implements PostgreObject, DBPOverloadedObject, DB
      * SQL query originally copy-pasted from pgAdmin sources with some modifications.
      */
     public static List<PostgreDependency> readDependencies(DBRProgressMonitor monitor, PostgreObject object, boolean dependents) throws DBCException {
-        PostgreDataSource dataSource = object.getDataSource();
-        Boolean isMMode = false;
-        if (dataSource instanceof DatabaseCompatibilityProvider) {
-            DatabaseCompatibilityProvider compatibilityProvider = (DatabaseCompatibilityProvider) dataSource;
-            try {
-                String compatibilityMode = compatibilityProvider.getDatabaseCompatibleMode();
-                if ("M".equals(compatibilityMode)) {
-                    isMMode = true;
-                }
-            } catch (DBException e) {
-                log.error("Failed to get GaussDB compatibility mode", e);
-            }
-        }
-
         List<PostgreDependency> dependencies = new ArrayList<>();
 
         try (JDBCSession session = DBUtils.openMetaSession(monitor, object, "Load object dependencies")) {
@@ -266,17 +251,12 @@ public class PostgreDependency implements PostgreObject, DBPOverloadedObject, DB
                     "        WHEN co.oid IS NOT NULL THEN 'C'::text || contype::text\n" +
                     "        WHEN ad.oid IS NOT NULL THEN 'A'::text\n" +
                     "        ELSE ''\n" +
-                    "    END AS type,\n" + (isMMode ?
-                    "    COALESCE(coc.relname::text, clrw.relname::text, tgr.relname::text) AS ownertable,\n" +
-                    "    CASE WHEN cl.relname IS NOT NULL AND att.attname IS NOT NULL THEN CONCAT(cl.relname, '.', att.attname)::text\n" +
-                    "    ELSE COALESCE(cl.relname::text, co.conname::text, pr.proname::text, tg.tgname::text, ty.typname::text, la.lanname::text, rw.rulename::text, ns.nspname::text)\n" +
-                    "    END AS refname,\n" +
-                    "    COALESCE(nsc.nspname::text, nso.nspname::text, nsp.nspname::text, nst.nspname::text, nsrw.nspname::text, tgrn.nspname::text) AS nspname\n" :
+                    "    END AS type,\n" +
                     "    COALESCE(coc.relname, clrw.relname, tgr.relname) AS ownertable,\n" +
                     "    CASE WHEN cl.relname IS NOT NULL AND att.attname IS NOT NULL THEN cl.relname || '.' || att.attname\n" +
                     "    ELSE COALESCE(cl.relname, co.conname, pr.proname, tg.tgname, ty.typname, la.lanname, rw.rulename, ns.nspname)\n" +
                     "    END AS refname,\n" +
-                    "    COALESCE(nsc.nspname, nso.nspname, nsp.nspname, nst.nspname, nsrw.nspname, tgrn.nspname) AS nspname\n") +
+                    "    COALESCE(nsc.nspname, nso.nspname, nsp.nspname, nst.nspname, nsrw.nspname, tgrn.nspname) AS nspname\n" +
                     "FROM pg_depend dep\n" +
                     "LEFT JOIN pg_class cl ON dep." + queryObjId + "=cl.oid\n" +
                     "LEFT JOIN pg_attribute att ON dep." + queryObjId + "=att.attrelid AND dep.objsubid=att.attnum\n" +
