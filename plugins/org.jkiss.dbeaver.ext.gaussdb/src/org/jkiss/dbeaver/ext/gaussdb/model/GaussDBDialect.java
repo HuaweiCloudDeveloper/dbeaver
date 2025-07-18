@@ -25,7 +25,6 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.ModelPreferences;
-import org.jkiss.dbeaver.ext.postgresql.model.PostgreDataTypeCache;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDialect;
 import org.jkiss.dbeaver.model.DBPDataSource;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
@@ -40,7 +39,7 @@ public class GaussDBDialect extends PostgreDialect {
 
     private GaussDBDataSource dataSource;
 
-    private static final Log log = Log.getLog(PostgreDataTypeCache.class);
+    private static final Log log = Log.getLog(GaussDBDialect.class);
 
     public static final String[][] MYSQL_QUOTE_STRINGS = {
         {"`", "`"},
