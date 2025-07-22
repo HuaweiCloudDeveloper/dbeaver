@@ -172,13 +172,9 @@ public class PostgreDataTypeCache extends JDBCObjectCache<PostgreSchema, Postgre
         // Check if compatibility interfaces have been implemented
         if (dataSource instanceof DatabaseCompatibilityProvider) {
             DatabaseCompatibilityProvider compatibilityProvider = (DatabaseCompatibilityProvider) dataSource;
-            try {
-                String mode = compatibilityProvider.getDatabaseCompatibleMode();
-                if ("M".equals(mode)) {
-                    return "t.typname as base_type_name";
-                }
-            } catch (DBException e) {
-                log.error("Failed to get GaussDB compatibility mode", e);
+            String mode = compatibilityProvider.getDatabaseCompatibleMode();
+            if ("M".equals(mode)) {
+                return "t.typname as base_type_name";
             }
         }
 
