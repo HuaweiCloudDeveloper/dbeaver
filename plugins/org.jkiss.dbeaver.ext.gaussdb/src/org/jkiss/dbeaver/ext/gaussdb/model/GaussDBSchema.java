@@ -304,13 +304,7 @@ public class GaussDBSchema extends PostgreSchema {
         GaussDBDataSource gaussDataSource = (GaussDBDataSource) dataSource;
 
         // Call the data source method to obtain compatibility mode
-        try {
-            String compatibilityMode = gaussDataSource.getDatabaseCompatibleMode();
-            return "M".equals(compatibilityMode);
-        } catch (DBException e) {
-            log.error("Failed to get GaussDB compatibility mode", e);
-            // Default non-M mode when abnormal
-            return false;
-        }
+        String compatibilityMode = gaussDataSource.getDatabaseCompatibleMode();
+        return "M".equals(compatibilityMode);
     }
 }

@@ -239,13 +239,9 @@ public class PostgreDependency implements PostgreObject, DBPOverloadedObject, DB
         Boolean isMMode = false;
         if (dataSource instanceof DatabaseCompatibilityProvider) {
             DatabaseCompatibilityProvider compatibilityProvider = (DatabaseCompatibilityProvider) dataSource;
-            try {
-                String compatibilityMode = compatibilityProvider.getDatabaseCompatibleMode();
-                if ("M".equals(compatibilityMode)) {
-                    isMMode = true;
-                }
-            } catch (DBException e) {
-                log.error("Failed to get GaussDB compatibility mode", e);
+            String compatibilityMode = compatibilityProvider.getDatabaseCompatibleMode();
+            if ("M".equals(compatibilityMode)) {
+                isMMode = true;
             }
         }
 
