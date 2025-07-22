@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDialect;
 import org.jkiss.dbeaver.model.DBPDataSource;
@@ -28,18 +29,44 @@ import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.model.struct.rdb.DBSProcedure;
 import org.jkiss.dbeaver.model.struct.rdb.DBSProcedureParameter;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
+import org.jkiss.utils.ArrayUtils;
 import org.jkiss.utils.CommonUtils;
 
 public class GaussDBDialect extends PostgreDialect {
+
+    private GaussDBDataSource dataSource;
+
+    public static final String[][] MYSQL_QUOTE_STRINGS = {
+            {"`", "`"},
+            {"\"", "\""},
+    };
+
+    public GaussDBDialect() {
+        this.dataSource = dataSource;
+    }
+
+    public void setDataSource(GaussDBDataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
+    public GaussDBDataSource getDataSource() {
+        return dataSource;
+    }
 
     @Override
     public boolean isDelimiterAfterBlock() {
         return true;
     }
 
+    @Nullable
+    @Override
+    public String[][] getIdentifierQuoteStrings() {
+        return DEFAULT_IDENTIFIER_QUOTES;
+    }
+
     @Override
     public void generateStoredProcedureCall(StringBuilder sql, DBSProcedure proc,
-        Collection<? extends DBSProcedureParameter> parameters, boolean castParams) {
+                                            Collection<? extends DBSProcedureParameter> parameters, boolean castParams) {
         List<DBSProcedureParameter> inParameters = new ArrayList<>();
         if (parameters != null) {
             inParameters.addAll(parameters);
@@ -53,8 +80,9 @@ public class GaussDBDialect extends PostgreDialect {
         }
         String namedParameterPrefix = prefStore.getString(ModelPreferences.SQL_NAMED_PARAMETERS_PREFIX);
         boolean useBrackets = useBracketsForExec(proc);
-        if (useBrackets)
+        if (useBrackets) {
             sql.append("{ ");
+        }
         sql.append(getStoredProcedureCallInitialClause(proc)).append("(");
         if (!inParameters.isEmpty()) {
             inParametersProc(sql, castParams, inParameters, namedParameterPrefix);
@@ -73,40 +101,67 @@ public class GaussDBDialect extends PostgreDialect {
     }
 
     private void inParametersProc(StringBuilder sql, boolean castParams, List<DBSProcedureParameter> inParameters,
-        String namedParameterPrefix) {
+                                  String namedParameterPrefix) {
         boolean first = true;
         for (DBSProcedureParameter parameter : inParameters) {
             String typeName = parameter.getParameterType().getFullTypeName();
-            switch (parameter.getParameterKind())
-            {
-            case INOUT:
-            case IN:
-                if (!first) {
-                    sql.append(", ");
-                }
-                if (castParams) {
-                    sql.append("cast(").append(namedParameterPrefix).append(CommonUtils.escapeIdentifier(parameter.getName()))
-                        .append(" as ").append(typeName).append(")");
-                } else {
-                    sql.append(namedParameterPrefix).append(CommonUtils.escapeIdentifier(parameter.getName()));
-                }
-                break;
-            case RETURN:
-                continue;
-            default:
-                if (isStoredProcedureCallIncludesOutParameters()) {
+            switch (parameter.getParameterKind()) {
+                case INOUT:
+                case IN:
                     if (!first) {
                         sql.append(", ");
                     }
                     if (castParams) {
-                        sql.append("cast(?").append(" as ").append(typeName).append(")");
+                        sql.append("cast(").append(namedParameterPrefix).append(CommonUtils.escapeIdentifier(parameter.getName()))
+                                .append(" as ").append(typeName).append(")");
                     } else {
-                        sql.append("?");
+                        sql.append(namedParameterPrefix).append(CommonUtils.escapeIdentifier(parameter.getName()));
                     }
-                }
-                break;
+                    break;
+                case RETURN:
+                    continue;
+                default:
+                    if (isStoredProcedureCallIncludesOutParameters()) {
+                        if (!first) {
+                            sql.append(", ");
+                        }
+                        if (castParams) {
+                            sql.append("cast(?").append(" as ").append(typeName).append(")");
+                        } else {
+                            sql.append("?");
+                        }
+                    }
+                    break;
             }
             first = false;
+        }
+    }
+
+    @Override
+    public String getQuotedIdentifier(String str, boolean forceCaseSensitive, boolean forceQuotes) {
+        if (isQuotedIdentifier(str)) {
+            // Already quoted
+            return str;
+        }
+        String[][] quoteStrings;
+        String databaseCompatibleMode = "";
+        GaussDBDataSource dataSource = getDataSource();
+        databaseCompatibleMode = dataSource.getDatabaseCompatibleMode();
+        if (!databaseCompatibleMode.isEmpty() && "M".equals(databaseCompatibleMode)) {
+            quoteStrings = this.MYSQL_QUOTE_STRINGS;
+            forceCaseSensitive = false;
+        } else {
+            quoteStrings = this.getIdentifierQuoteStrings();
+        }
+
+        if (ArrayUtils.isEmpty(quoteStrings)) {
+            return str;
+        }
+
+        if (mustBeQuoted(str, forceCaseSensitive) || forceQuotes) {
+            return quoteIdentifier(str, quoteStrings);
+        } else {
+            return str;
         }
     }
 }
