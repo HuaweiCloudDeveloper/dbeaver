@@ -27,6 +27,7 @@ import org.jkiss.dbeaver.ext.postgresql.model.PostgreTableBase;
 import org.jkiss.dbeaver.ext.postgresql.model.impls.PostgreServerExtensionBase;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCResultSet;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
+import org.jkiss.dbeaver.ext.gaussdb.GaussdbConstants;
 
 public class PostgreServerGaussDB extends PostgreServerExtensionBase {
 
@@ -90,5 +91,10 @@ public class PostgreServerGaussDB extends PostgreServerExtensionBase {
             return new GaussDBSequence(schema);
         }
         return super.createNewRelation(monitor, schema, kind, copyFrom);
+    }
+    @Override
+    public boolean isPGObject(@NotNull Object object) {
+        String className = object.getClass().getName();
+        return GaussdbConstants.GAUSSDB_PG_OBJECT_CLASS.equals(className);
     }
 }
