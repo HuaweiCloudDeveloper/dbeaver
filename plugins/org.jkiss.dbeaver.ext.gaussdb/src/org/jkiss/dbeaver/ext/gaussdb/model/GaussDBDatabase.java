@@ -17,10 +17,6 @@
 
 package org.jkiss.dbeaver.ext.gaussdb.model;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collections;
-import java.util.List;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
@@ -42,6 +38,11 @@ import org.jkiss.dbeaver.model.impl.jdbc.JDBCUtils;
 import org.jkiss.dbeaver.model.impl.jdbc.cache.JDBCObjectLookupCache;
 import org.jkiss.dbeaver.model.meta.Property;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collections;
+import java.util.List;
 
 public class GaussDBDatabase extends PostgreDatabase {
 
@@ -105,7 +106,7 @@ public class GaussDBDatabase extends PostgreDatabase {
 
     /**
      * is package supported
-     * 
+     *
      * @return is package supported
      */
     public boolean isPackageSupported() {
@@ -177,7 +178,7 @@ public class GaussDBDatabase extends PostgreDatabase {
     
     /**
      * set package supported
-     * 
+     *
      * @param isPackageSupported
      *            is package supported
      */

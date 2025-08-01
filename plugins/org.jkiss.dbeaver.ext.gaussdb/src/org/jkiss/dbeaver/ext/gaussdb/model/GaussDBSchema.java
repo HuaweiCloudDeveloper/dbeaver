@@ -17,11 +17,6 @@
 
 package org.jkiss.dbeaver.ext.gaussdb.model;
 
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Locale;
-import java.util.stream.Collectors;
-
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
@@ -42,6 +37,11 @@ import org.jkiss.dbeaver.model.impl.jdbc.cache.JDBCObjectCache;
 import org.jkiss.dbeaver.model.impl.jdbc.cache.JDBCObjectLookupCache;
 import org.jkiss.dbeaver.model.meta.Association;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
+
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class GaussDBSchema extends PostgreSchema {
 
@@ -295,7 +295,7 @@ public class GaussDBSchema extends PostgreSchema {
     }
 
     private boolean isMMode(PostgreTableContainer tableContainer) {
-        GaussDBDatabase database=(GaussDBDatabase)tableContainer.getDatabase();
+        GaussDBDatabase database = (GaussDBDatabase) tableContainer.getDatabase();
         String compatibilityMode = database.getDatabaseCompatibleMode();
         return "M".equals(compatibilityMode);
     }

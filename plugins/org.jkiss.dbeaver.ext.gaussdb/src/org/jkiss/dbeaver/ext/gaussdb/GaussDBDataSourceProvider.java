@@ -17,9 +17,6 @@
 
 package org.jkiss.dbeaver.ext.gaussdb;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.ext.gaussdb.model.GaussDBDataSource;
 import org.jkiss.dbeaver.ext.postgresql.PostgreConstants;
@@ -40,6 +37,9 @@ import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.utils.PrefUtils;
 import org.jkiss.utils.CommonUtils;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class GaussDBDataSourceProvider extends JDBCDataSourceProvider {
 

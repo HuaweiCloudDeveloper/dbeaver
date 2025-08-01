@@ -16,9 +16,6 @@
  */
 package org.jkiss.dbeaver.ext.gaussdb.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDataSource;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDatabase;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDependency;
@@ -32,18 +29,22 @@ import org.jkiss.dbeaver.model.impl.jdbc.JDBCUtils;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.utils.CommonUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class GaussDBDependency extends PostgreDependency {
     public GaussDBDependency(PostgreDatabase database, long objectId, String depType, String name,
                              String description, String objectType, String tableName, String schemaName) {
         super(database, objectId, depType, name, description, objectType, tableName, schemaName);
     }
-        /**
+
+    /**
      * Reads list of dependent objects.
      * SQL query originally copy-pasted from pgAdmin sources with some modifications.
      */
     public static List<PostgreDependency> readDependencies(DBRProgressMonitor monitor, PostgreObject object, boolean dependents) throws
-        DBCException {
-        Boolean isMMode = ((GaussDBDatabase)object.getDatabase()).getDatabaseCompatibleMode().equals("M");
+            DBCException {
+        Boolean isMMode = ((GaussDBDatabase) object.getDatabase()).getDatabaseCompatibleMode().equals("M");
         List<PostgreDependency> dependencies = new ArrayList<>();
         try (JDBCSession session = DBUtils.openMetaSession(monitor, object, "Load object dependencies")) {
             String queryObjId = dependents ? "objid" : "refobjid";
@@ -94,8 +95,7 @@ public class GaussDBDependency extends PostgreDependency {
                     "LEFT JOIN pg_attrdef ad ON ad.oid=dep." + queryObjId + "\n" +
                     "LEFT JOIN pg_attribute attr ON attr.attrelid=ad.adrelid and attr.attnum=ad.adnum\n" +
                     "WHERE dep." + condObjId + "=?\n" +
-                    "ORDER BY type"))
-            {
+                        "ORDER BY type")) {
                 dbStat.setLong(1, object.getObjectId());
                 try (JDBCResultSet dbResult = dbStat.executeQuery()) {
                     while (dbResult.next()) {

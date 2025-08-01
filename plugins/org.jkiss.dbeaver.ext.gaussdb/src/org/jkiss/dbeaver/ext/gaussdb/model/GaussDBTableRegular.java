@@ -16,15 +16,15 @@
  */
 package org.jkiss.dbeaver.ext.gaussdb.model;
 
-import java.sql.ResultSet;
-import java.util.List;
-
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDependency;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreSchema;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreTableRegular;
 import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
+
+import java.sql.ResultSet;
+import java.util.List;
 
 public class GaussDBTableRegular extends PostgreTableRegular {
 
