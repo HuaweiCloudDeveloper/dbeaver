@@ -50,7 +50,8 @@ public class GaussDBDependency extends PostgreDependency {
             String queryObjId = dependents ? "objid" : "refobjid";
             String condObjId = dependents ? "refobjid" : "objid";
             try (JDBCPreparedStatement dbStat = session.prepareStatement(
-                "SELECT DISTINCT dep.deptype, dep.classid, dep." + queryObjId + ", cl.relkind, attr.attname,pg_get_expr(ad.adbin, ad.adrelid) adefval,\n" +
+                "SELECT DISTINCT dep.deptype, dep.classid, dep." + queryObjId +
+                        ", cl.relkind, attr.attname,pg_get_expr(ad.adbin, ad.adrelid) adefval,\n" +
                     "    CASE WHEN cl.relkind IS NOT NULL THEN cl.relkind::text || COALESCE(dep.objsubid::text, '')::text\n" +
                     "        WHEN tg.oid IS NOT NULL THEN 'T'::text\n" +
                     "        WHEN ty.oid IS NOT NULL THEN 'y'::text\n" +
@@ -65,9 +66,11 @@ public class GaussDBDependency extends PostgreDependency {
                     (isMMode ?
                     "    COALESCE(coc.relname::text, clrw.relname::text, tgr.relname::text) AS ownertable,\n" +
                     "    CASE WHEN cl.relname IS NOT NULL AND att.attname IS NOT NULL THEN CONCAT(cl.relname, '.', att.attname)::text\n" +
-                    "    ELSE COALESCE(cl.relname::text, co.conname::text, pr.proname::text, tg.tgname::text, ty.typname::text, la.lanname::text, rw.rulename::text, ns.nspname::text)\n" +
+                    "    ELSE COALESCE(cl.relname::text, co.conname::text, pr.proname::text, tg.tgname::text, ty.typname::text," +
+                            " la.lanname::text, rw.rulename::text, ns.nspname::text)\n" +
                     "    END AS refname,\n" +
-                    "    COALESCE(nsc.nspname::text, nso.nspname::text, nsp.nspname::text, nst.nspname::text, nsrw.nspname::text, tgrn.nspname::text) AS nspname\n" :
+                    "    COALESCE(nsc.nspname::text, nso.nspname::text, nsp.nspname::text, nst.nspname::text, " +
+                            "nsrw.nspname::text, tgrn.nspname::text) AS nspname\n" :
                     "    COALESCE(coc.relname, clrw.relname, tgr.relname) AS ownertable,\n" +
                     "    CASE WHEN cl.relname IS NOT NULL AND att.attname IS NOT NULL THEN cl.relname || '.' || att.attname\n" +
                     "    ELSE COALESCE(cl.relname, co.conname, pr.proname, tg.tgname, ty.typname, la.lanname, rw.rulename, ns.nspname)\n" +

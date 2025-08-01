@@ -61,6 +61,6 @@ public class GaussDBSequence extends PostgreSequence {
             additionalInfo.setLoaded(true);
         } catch (Exception e) {
             log.warn("Error reading sequence values", e);
-        };
+        }
     }
 }

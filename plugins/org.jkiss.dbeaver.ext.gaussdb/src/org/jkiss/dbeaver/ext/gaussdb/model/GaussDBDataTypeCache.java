@@ -84,8 +84,8 @@ public class GaussDBDataTypeCache extends PostgreDataTypeCache {
 
     @NotNull
     static PostgreDataType resolveDataType(@NotNull DBRProgressMonitor monitor, @NotNull PostgreDatabase database, long oid)
-        throws SQLException,
-        DBException {
+            throws SQLException,
+            DBException {
         // Initially cache only base types (everything but composite and arrays)
         try (JDBCSession session = database.getDefaultContext(monitor, true)
             .openSession(monitor, DBCExecutionPurpose.META, "Resolve data type by OID")) {
@@ -118,7 +118,7 @@ public class GaussDBDataTypeCache extends PostgreDataTypeCache {
 
     @NotNull
     static PostgreDataType resolveDataType(@NotNull DBRProgressMonitor monitor, @NotNull PostgreDatabase database, String name)
-        throws SQLException, DBException {
+            throws SQLException, DBException {
         // Initially cache only base types (everything but composite and arrays)
         try (JDBCSession session = database.getDefaultContext(monitor, true)
             .openSession(monitor, DBCExecutionPurpose.META, "Resolve data type by name")) {

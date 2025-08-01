@@ -204,15 +204,18 @@ public class GaussDBSchema extends PostgreSchema {
 
         @NotNull
         @Override
-        protected JDBCStatement prepareObjectsStatement(JDBCSession session, PostgreTableContainer container, PostgreTableBase forParent) throws SQLException {
+        protected JDBCStatement prepareObjectsStatement(JDBCSession session, PostgreTableContainer container,
+                                                        PostgreTableBase forParent) throws SQLException {
             StringBuilder sql = new StringBuilder(
                 "SELECT c.oid,c.*,t.relname as tabrelname,rt.relnamespace as refnamespace,d.description" +
                     (!getDataSource().getServerType().supportsPGConstraintExpressionColumn() ? ", null as consrc_copy" :
-                        ", case when c.contype='c' then " + (isMMode(container) ? "substring" : "\"substring\"")+ "(pg_get_constraintdef(c.oid), 7) else null end consrc_copy") +
+                    ", case when c.contype='c' then " + (isMMode(container) ? "substring" : "\"substring\"") +
+                            "(pg_get_constraintdef(c.oid), 7) else null end consrc_copy") +
                     "\nFROM pg_catalog.pg_constraint c" +
                     "\nINNER JOIN pg_catalog.pg_class t ON t.oid=c.conrelid" +
                     "\nLEFT OUTER JOIN pg_catalog.pg_class rt ON rt.oid=c.confrelid" +
-                    "\nLEFT OUTER JOIN pg_catalog.pg_description d ON d.objoid=c.oid AND d.objsubid=0 AND d.classoid='pg_constraint'::regclass" +
+                    "\nLEFT OUTER JOIN " +
+                        "pg_catalog.pg_description d ON d.objoid=c.oid AND d.objsubid=0 AND d.classoid='pg_constraint'::regclass" +
                     "\nWHERE ");
             if (forParent == null) {
                 sql.append("t.relnamespace=?");
@@ -242,7 +245,9 @@ public class GaussDBSchema extends PostgreSchema {
             boolean supportsExprIndex = getDataSource().isServerVersionAtLeast(7, 4);
             StringBuilder sql = new StringBuilder();
             sql.append(
-                    "SELECT i.*,i.indkey as " + (isMMode(container) ? "\"keys\"" : "keys") + ",c.relname,c.relnamespace,c.relam,c.reltablespace,tc.relname as tabrelname,dsc.description");
+                    "SELECT i.*,i.indkey as " + (isMMode(container) ? "\"keys\"" : "keys") + ",c.relname,c.relnamespace,c.relam," +
+                            "c.reltablespace,tc.relname " +
+                            "as tabrelname,dsc.description");
             if (supportsExprIndex) {
                 sql.append(",pg_catalog.pg_get_expr(i.indpred, i.indrelid) as pred_expr");
                 sql.append(",pg_catalog.pg_get_expr(i.indexprs, i.indrelid, true) as expr");

@@ -211,7 +211,7 @@ public class GaussDBPackage implements PostgreObject, PostgreScriptObject, DBPSy
                 + " as arg_defaults,d.description\n" + "FROM pg_catalog." + serverType.getProceduresSystemTable() + " p\n"
                 + "LEFT OUTER JOIN pg_catalog.pg_description d ON d.objoid=p." + oidColumn
                 + (session.getDataSource().isServerVersionAtLeast(7, 2) ? " AND d.objsubid = 0" : "") + // no links to
-                                                                                                        // columns
+                // columns
                 "\nWHERE p.pronamespace=?" + (object == null ? "" : " AND p." + oidColumn + "=?") + "\nORDER BY p.proname");
             dbStat.setLong(1, owner.getObjectId());
             if (object != null) {
