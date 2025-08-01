@@ -19,9 +19,14 @@ package org.jkiss.dbeaver.ext.gaussdb.model;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.List;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
+import org.jkiss.dbeaver.Log;
+import org.jkiss.dbeaver.ext.postgresql.PostgreConstants;
+import org.jkiss.dbeaver.ext.postgresql.model.*;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreCharset;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDatabase;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreRole;
@@ -41,6 +46,7 @@ import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 public class GaussDBDatabase extends PostgreDatabase {
 
     private DBRProgressMonitor monitor;
+    private static final Log log = Log.getLog(GaussDBDatabase.class);
 
     /**
      * Character Type
@@ -182,4 +188,104 @@ public class GaussDBDatabase extends PostgreDatabase {
     public void checkPackageSupport(DBRProgressMonitor monitor) {
         setPackageSupported("Oracle".equalsIgnoreCase(DBCompatibilityEnum.queryTextByValue(this.databaseCompatibleMode)));
     }
+
+    @Override
+    protected String getBaseTypeNameClause() {
+        return GaussDBDataTypeCache.getBaseTypeNameClause((PostgreDataSource) dataSource, databaseCompatibleMode);
+    }
+    
+    @Override
+    public PostgreDataType getDataType(DBRProgressMonitor monitor, long typeId) {
+        if (typeId <= 0) {
+            return null;
+        }
+        PostgreDataType dataType;
+        synchronized (dataTypeCache) {
+            dataType = dataTypeCache.get(typeId);
+            if (dataType != null) {
+                return dataType;
+            }
+        }
+        for (PostgreSchema schema : schemaCache.getCachedObjects()) {
+            dataType = schema.getDataTypeCache().getDataType(typeId);
+            if (dataType != null) {
+                synchronized (dataTypeCache) {
+                    dataTypeCache.put(typeId, dataType);
+                }
+                return dataType;
+            }
+        }
+        // Type not found. Let's resolve it
+        try {
+            dataType = GaussDBDataTypeCache.resolveDataType(monitor, this, typeId);
+            dataType.getParentObject().getDataTypeCache().cacheObject(dataType);
+            synchronized (dataTypeCache) {
+                dataTypeCache.put(dataType.getObjectId(), dataType);
+            }
+            return dataType;
+        } catch (Exception e) {
+            log.debug("Can't resolve data type " + typeId, e);
+            return null;
+        }
+    }
+
+    @Override
+    public PostgreDataType getDataType(@Nullable DBRProgressMonitor monitor, String typeName) {
+        if (typeName.endsWith("[]")) {
+            // In some cases ResultSetMetadata returns it as []
+            typeName = "_" + typeName.substring(0, typeName.length() - 2);
+        }
+        {
+            // First check system catalog
+            final PostgreSchema schema = getCatalogSchema();
+            if (schema != null) {
+                final PostgreDataType dataType = schema.getDataTypeCache().getCachedObject(typeName);
+                if (dataType != null) {
+                    return dataType;
+                }
+            }
+        }
+
+        // Check schemas in search path
+        PostgreExecutionContext metaContext = getMetaContext();
+        List<String> searchPath =
+            metaContext == null ? Collections.singletonList(PostgreConstants.CATALOG_SCHEMA_NAME) : metaContext.getSearchPath();
+        for (String schemaName : searchPath) {
+            final PostgreSchema schema = schemaCache.getCachedObject(schemaName);
+            if (schema != null) {
+                final PostgreDataType dataType = schema.getDataTypeCache().getCachedObject(typeName);
+                if (dataType != null) {
+                    return dataType;
+                }
+            }
+        }
+        // Check the rest
+        for (PostgreSchema schema : schemaCache.getCachedObjects()) {
+            if (searchPath.contains(schema.getName())) {
+                continue;
+            }
+            final PostgreDataType dataType = schema.getDataTypeCache().getCachedObject(typeName);
+            if (dataType != null) {
+                return dataType;
+            }
+        }
+
+        if (monitor == null || monitor.isForceCacheUsage()) {
+            return null;
+        }
+
+        // Type not found. Let's resolve it
+        try {
+            PostgreDataType dataType = GaussDBDataTypeCache.resolveDataType(monitor, this, typeName);
+            dataType.getParentObject().getDataTypeCache().cacheObject(dataType);
+            synchronized (dataTypeCache) {
+                dataTypeCache.put(dataType.getObjectId(), dataType);
+            }
+            return dataType;
+        } catch (Exception e) {
+            log.debug("Can't resolve data type '" + typeName + "' in database '" + getName() + "'");
+            return null;
+        }
+    }
+
 }

@@ -146,7 +146,7 @@ public class GaussDBDialect extends PostgreDialect {
         String[][] quoteStrings;
         String databaseCompatibleMode = "";
         GaussDBDataSource dataSource = getDataSource();
-        databaseCompatibleMode = dataSource.getDatabaseCompatibleMode();
+        databaseCompatibleMode = ((GaussDBDatabase)dataSource.getDefaultInstance()).getDatabaseCompatibleMode();
         if (!databaseCompatibleMode.isEmpty() && "M".equals(databaseCompatibleMode)) {
             quoteStrings = this.MYSQL_QUOTE_STRINGS;
             forceCaseSensitive = false;
