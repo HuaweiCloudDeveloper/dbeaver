@@ -89,7 +89,7 @@ public class PostgreSchema implements
     private final ConstraintCache constraintCache;
     private final ProceduresCache proceduresCache;
     private final IndexCache indexCache;
-    private final PostgreDataTypeCache dataTypeCache;
+    protected PostgreDataTypeCache dataTypeCache;
     private ArrayList<PostgrePrivilege> defaultPrivileges;
     protected volatile boolean hasStatistics;
 
