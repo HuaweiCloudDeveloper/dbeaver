@@ -17,10 +17,6 @@
 
 package org.jkiss.dbeaver.ext.gaussdb.model;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDialect;
@@ -31,6 +27,10 @@ import org.jkiss.dbeaver.model.struct.rdb.DBSProcedureParameter;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.utils.ArrayUtils;
 import org.jkiss.utils.CommonUtils;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class GaussDBDialect extends PostgreDialect {
 
@@ -146,7 +146,7 @@ public class GaussDBDialect extends PostgreDialect {
         String[][] quoteStrings;
         String databaseCompatibleMode = "";
         GaussDBDataSource dataSource = getDataSource();
-        databaseCompatibleMode = dataSource.getDatabaseCompatibleMode();
+        databaseCompatibleMode = ((GaussDBDatabase) dataSource.getDefaultInstance()).getDatabaseCompatibleMode();
         if (!databaseCompatibleMode.isEmpty() && "M".equals(databaseCompatibleMode)) {
             quoteStrings = this.MYSQL_QUOTE_STRINGS;
             forceCaseSensitive = false;

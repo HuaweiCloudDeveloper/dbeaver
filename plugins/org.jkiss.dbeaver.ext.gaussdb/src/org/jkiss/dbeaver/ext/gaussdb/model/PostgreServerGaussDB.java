@@ -18,6 +18,7 @@ package org.jkiss.dbeaver.ext.gaussdb.model;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
+import org.jkiss.dbeaver.ext.gaussdb.GaussdbConstants;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreClass;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDataSource;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDatabase;
@@ -79,6 +80,8 @@ public class PostgreServerGaussDB extends PostgreServerExtensionBase {
     public PostgreTableBase createRelationOfClass(PostgreSchema schema, PostgreClass.RelKind kind, JDBCResultSet dbResult) {
         if (kind == PostgreClass.RelKind.S) {
             return new GaussDBSequence(schema, dbResult);
+        } else if (kind == PostgreClass.RelKind.r) {
+            return new GaussDBTableRegular(schema, dbResult);
         }
         return super.createRelationOfClass(schema, kind, dbResult);
     }
@@ -90,5 +93,11 @@ public class PostgreServerGaussDB extends PostgreServerExtensionBase {
             return new GaussDBSequence(schema);
         }
         return super.createNewRelation(monitor, schema, kind, copyFrom);
+    }
+
+    @Override
+    public boolean isPGObject(@NotNull Object object) {
+        String className = object.getClass().getName();
+        return GaussdbConstants.GAUSSDB_PG_OBJECT_CLASS.equals(className);
     }
 }

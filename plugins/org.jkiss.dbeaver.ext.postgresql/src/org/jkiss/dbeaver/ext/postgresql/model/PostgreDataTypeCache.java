@@ -29,7 +29,6 @@ import org.jkiss.dbeaver.model.exec.jdbc.JDBCStatement;
 import org.jkiss.dbeaver.model.impl.jdbc.JDBCUtils;
 import org.jkiss.dbeaver.model.impl.jdbc.cache.JDBCObjectCache;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
-import org.jkiss.dbeaver.utils.DatabaseCompatibilityProvider;
 import org.jkiss.utils.CommonUtils;
 import org.jkiss.utils.LongKeyMap;
 
@@ -47,7 +46,7 @@ public class PostgreDataTypeCache extends JDBCObjectCache<PostgreSchema, Postgre
 
     private final LongKeyMap<PostgreDataType> dataTypeMap = new LongKeyMap<>();
 
-    PostgreDataTypeCache() {
+    protected PostgreDataTypeCache() {
         setListOrderComparator(DBUtils.nameComparator());
         setCaseSensitive(false);
     }
@@ -169,15 +168,6 @@ public class PostgreDataTypeCache extends JDBCObjectCache<PostgreSchema, Postgre
     }
 
     static String getBaseTypeNameClause(@NotNull PostgreDataSource dataSource) {
-        // Check if compatibility interfaces have been implemented
-        if (dataSource instanceof DatabaseCompatibilityProvider) {
-            DatabaseCompatibilityProvider compatibilityProvider = (DatabaseCompatibilityProvider) dataSource;
-            String mode = compatibilityProvider.getDatabaseCompatibleMode();
-            if ("M".equals(mode)) {
-                return "t.typname as base_type_name";
-            }
-        }
-
         if (dataSource.isServerVersionAtLeast(7, 3)) {
             return "format_type(nullif(t.typbasetype, 0), t.typtypmod) as base_type_name";
         } else {
