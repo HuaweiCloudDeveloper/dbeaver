@@ -21,6 +21,7 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
+import org.jkiss.dbeaver.ext.gaussdb.GaussdbConstants;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDatabase;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreIndex;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreProcedureKind;
@@ -39,6 +40,7 @@ import org.jkiss.dbeaver.model.meta.Association;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -117,7 +119,7 @@ public class GaussDBSchema extends PostgreSchema {
         @NotNull
         @Override
         protected JDBCStatement prepareObjectsStatement(@NotNull JDBCSession session,
-            @NotNull GaussDBSchema owner) throws SQLException {
+            @Nullable GaussDBSchema owner) throws SQLException {
             final JDBCPreparedStatement dbStat = session
                 .prepareStatement("select g.oid, g.pkgnamespace, g.pkgname as name from gs_package g where g.pkgnamespace = ?");
             dbStat.setLong(1, GaussDBSchema.this.getObjectId());
@@ -198,14 +200,12 @@ public class GaussDBSchema extends PostgreSchema {
     }
 
     public class ConstraintCache extends PostgreSchema.ConstraintCache {
-        protected ConstraintCache() {
-            super();
-        }
+        protected ConstraintCache() {}
 
         @NotNull
         @Override
-        protected JDBCStatement prepareObjectsStatement(JDBCSession session, PostgreTableContainer container,
-                                                        PostgreTableBase forParent) throws SQLException {
+        protected JDBCStatement prepareObjectsStatement(@Nullable JDBCSession session,@Nullable PostgreTableContainer container,
+                                                        @Nullable PostgreTableBase forParent) throws SQLException {
             StringBuilder sql = new StringBuilder(
                 "SELECT c.oid,c.*,t.relname as tabrelname,rt.relnamespace as refnamespace,d.description" +
                     (!getDataSource().getServerType().supportsPGConstraintExpressionColumn() ? ", null as consrc_copy" :
@@ -234,13 +234,11 @@ public class GaussDBSchema extends PostgreSchema {
     }
 
     public class IndexCache extends PostgreSchema.IndexCache {
-        protected IndexCache() {
-            super();
-        }
+        protected IndexCache() {}
 
         @NotNull
         @Override
-        protected JDBCStatement prepareObjectsStatement(JDBCSession session, PostgreTableContainer container, PostgreTableBase forTable)
+        protected JDBCStatement prepareObjectsStatement(@Nullable JDBCSession session,@Nullable PostgreTableContainer container,@Nullable PostgreTableBase forTable)
                 throws SQLException {
             boolean supportsExprIndex = getDataSource().isServerVersionAtLeast(7, 4);
             StringBuilder sql = new StringBuilder();
@@ -294,14 +292,15 @@ public class GaussDBSchema extends PostgreSchema {
     @Override
     public List<PostgreIndex> getIndexes(@NotNull DBRProgressMonitor monitor, @Nullable PostgreTableBase parent) throws DBException {
         if (indexCache == null) {
-            return List.of();
+            return Collections.emptyList();
         }
         return indexCache.getObjects(monitor, this, parent);
     }
 
-    private boolean isMMode(PostgreTableContainer tableContainer) {
+    @NotNull
+    private boolean isMMode(@NotNull PostgreTableContainer tableContainer) {
         GaussDBDatabase database = (GaussDBDatabase) tableContainer.getDatabase();
         String compatibilityMode = database.getDatabaseCompatibleMode();
-        return "M".equals(compatibilityMode);
+        return GaussdbConstants.GAUSSDB_M_COMPATIBLE_MODE.equals(compatibilityMode);
     }
 }

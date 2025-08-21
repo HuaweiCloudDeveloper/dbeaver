@@ -17,8 +17,10 @@
 
 package org.jkiss.dbeaver.ext.gaussdb.model;
 
+import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.ModelPreferences;
+import org.jkiss.dbeaver.ext.gaussdb.GaussdbConstants;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDialect;
 import org.jkiss.dbeaver.model.DBPDataSource;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
@@ -40,10 +42,6 @@ public class GaussDBDialect extends PostgreDialect {
             {"`", "`"},
             {"\"", "\""},
     };
-
-    public GaussDBDialect() {
-        this.dataSource = dataSource;
-    }
 
     public void setDataSource(GaussDBDataSource dataSource) {
         this.dataSource = dataSource;
@@ -138,18 +136,20 @@ public class GaussDBDialect extends PostgreDialect {
     }
 
     @Override
-    public String getQuotedIdentifier(String str, boolean forceCaseSensitive, boolean forceQuotes) {
+    @NotNull
+    public String getQuotedIdentifier(@NotNull String str,@Nullable boolean forceCaseSensitive,@Nullable boolean forceQuotes) {
         if (isQuotedIdentifier(str)) {
             // Already quoted
             return str;
         }
         String[][] quoteStrings;
         String databaseCompatibleMode = "";
+        boolean effectiveForceCaseSensitive = forceCaseSensitive;
         GaussDBDataSource dataSource = getDataSource();
         databaseCompatibleMode = ((GaussDBDatabase) dataSource.getDefaultInstance()).getDatabaseCompatibleMode();
-        if (!databaseCompatibleMode.isEmpty() && "M".equals(databaseCompatibleMode)) {
+        if (!databaseCompatibleMode.isEmpty() && GaussdbConstants.GAUSSDB_M_COMPATIBLE_MODE.equals(databaseCompatibleMode)) {
             quoteStrings = this.MYSQL_QUOTE_STRINGS;
-            forceCaseSensitive = false;
+            effectiveForceCaseSensitive = false;
         } else {
             quoteStrings = this.getIdentifierQuoteStrings();
         }
@@ -158,7 +158,7 @@ public class GaussDBDialect extends PostgreDialect {
             return str;
         }
 
-        if (mustBeQuoted(str, forceCaseSensitive) || forceQuotes) {
+        if (mustBeQuoted(str, effectiveForceCaseSensitive) || forceQuotes) {
             return quoteIdentifier(str, quoteStrings);
         } else {
             return str;

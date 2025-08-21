@@ -43,6 +43,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public class GaussDBDatabase extends PostgreDatabase {
 
@@ -176,7 +177,7 @@ public class GaussDBDatabase extends PostgreDatabase {
     public GaussDBSchema createSchemaImpl(@NotNull PostgreDatabase owner, @NotNull String name, @Nullable PostgreRole postgreRole) {
         return new GaussDBSchema(owner, name, postgreRole);
     }
-    
+
     /**
      * set package supported
      *
@@ -192,12 +193,14 @@ public class GaussDBDatabase extends PostgreDatabase {
     }
 
     @Override
+    @NotNull
     protected String getBaseTypeNameClause() {
         return GaussDBDataTypeCache.getBaseTypeNameClause((PostgreDataSource) dataSource, databaseCompatibleMode);
     }
     
     @Override
-    public PostgreDataType getDataType(DBRProgressMonitor monitor, long typeId) {
+    @Nullable
+    public PostgreDataType getDataType(@Nullable DBRProgressMonitor monitor, @Nullable long typeId) {
         if (typeId <= 0) {
             return null;
         }
@@ -218,21 +221,12 @@ public class GaussDBDatabase extends PostgreDatabase {
             }
         }
         // Type not found. Let's resolve it
-        try {
-            dataType = GaussDBDataTypeCache.resolveDataType(monitor, this, typeId);
-            dataType.getParentObject().getDataTypeCache().cacheObject(dataType);
-            synchronized (dataTypeCache) {
-                dataTypeCache.put(dataType.getObjectId(), dataType);
-            }
-            return dataType;
-        } catch (Exception e) {
-            log.debug("Can't resolve data type " + typeId, e);
-            return null;
-        }
+        return resolveAndCacheType(monitor, typeId);
     }
 
     @Override
-    public PostgreDataType getDataType(@Nullable DBRProgressMonitor monitor, String typeName) {
+    @Nullable
+    public PostgreDataType getDataType(@Nullable DBRProgressMonitor monitor, @Nullable String typeName) {
         if (typeName.endsWith("[]")) {
             // In some cases ResultSetMetadata returns it as []
             typeName = "_" + typeName.substring(0, typeName.length() - 2);
@@ -271,21 +265,28 @@ public class GaussDBDatabase extends PostgreDatabase {
                 return dataType;
             }
         }
-
-        if (monitor == null || monitor.isForceCacheUsage()) {
+        if (monitor.isForceCacheUsage()) {
             return null;
         }
-
         // Type not found. Let's resolve it
+        return resolveAndCacheType(monitor, typeName);
+    }
+
+    @Nullable
+    private <T> PostgreDataType resolveAndCacheType(
+        @Nullable DBRProgressMonitor monitor,
+        @NotNull T typeIdentifier
+    ) {
         try {
-            PostgreDataType dataType = GaussDBDataTypeCache.resolveDataType(monitor, this, typeName);
+            PostgreDataType dataType;
+            dataType = GaussDBDataTypeCache.resolveDataType(monitor, this, typeIdentifier);
             dataType.getParentObject().getDataTypeCache().cacheObject(dataType);
             synchronized (dataTypeCache) {
                 dataTypeCache.put(dataType.getObjectId(), dataType);
             }
             return dataType;
         } catch (Exception e) {
-            log.debug("Can't resolve data type '" + typeName + "' in database '" + getName() + "'");
+            log.debug("Can't resolve data type '" + typeIdentifier.getClass() + "' in database '" + getName() + "'");
             return null;
         }
     }

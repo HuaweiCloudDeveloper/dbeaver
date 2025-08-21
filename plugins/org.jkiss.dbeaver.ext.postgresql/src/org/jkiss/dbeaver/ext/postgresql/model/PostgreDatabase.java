@@ -974,8 +974,8 @@ public class PostgreDatabase extends JDBCRemoteInstance
             return null;
         }
     }
-
-    public PostgreDataType getDataType(@Nullable DBRProgressMonitor monitor, String typeName) {
+    @Nullable
+    public PostgreDataType getDataType(@Nullable DBRProgressMonitor monitor,@Nullable String typeName) {
         if (typeName.endsWith("[]")) {
             // In some cases ResultSetMetadata returns it as []
             typeName = "_" + typeName.substring(0, typeName.length() - 2);
@@ -1014,7 +1014,7 @@ public class PostgreDatabase extends JDBCRemoteInstance
             }
         }
 
-        if (monitor == null || monitor.isForceCacheUsage()) {
+        if (monitor.isForceCacheUsage()) {
             return null;
         }
 

@@ -162,16 +162,11 @@ public class GaussDBCreateDatabaseDialog extends BaseDialog {
         }
     }
 
-    //Edited by JaredYe
     private void supportsCompatibleMode(final Composite groupDefinition) {
-
         dbCompatibleMode = UIUtils.createLabelCombo(groupDefinition, "DataBase Compatibility Mode",
             SWT.BORDER | SWT.DROP_DOWN | SWT.READ_ONLY);
-
         DBCompatibilityEnum[] compatibilityModes = DBCompatibilityEnum.values();
-
         for (DBCompatibilityEnum mode : compatibilityModes) {
-
             dbCompatibleMode.add(mode.getcValue());
         }
         if (compatibilityModes.length > 0) {

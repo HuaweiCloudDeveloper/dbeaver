@@ -82,9 +82,5 @@ public class GaussDBDataSource extends PostgreDataSource {
         return serverExtension;
     }
 
-    @Override
-    protected void initializeRemoteInstance(@NotNull DBRProgressMonitor monitor) throws DBException {
-        super.initializeRemoteInstance(monitor);
-    }
 
 }
