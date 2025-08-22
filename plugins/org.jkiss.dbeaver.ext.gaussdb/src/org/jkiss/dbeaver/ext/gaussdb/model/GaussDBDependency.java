@@ -16,6 +16,9 @@
  */
 package org.jkiss.dbeaver.ext.gaussdb.model;
 
+import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
+import org.jkiss.dbeaver.ext.gaussdb.GaussdbConstants;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDataSource;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDatabase;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDependency;
@@ -42,16 +45,23 @@ public class GaussDBDependency extends PostgreDependency {
      * Reads list of dependent objects.
      * SQL query originally copy-pasted from pgAdmin sources with some modifications.
      */
-    public static List<PostgreDependency> readDependencies(DBRProgressMonitor monitor, PostgreObject object, boolean dependents) throws
-            DBCException {
-        Boolean isMMode = ((GaussDBDatabase) object.getDatabase()).getDatabaseCompatibleMode().equals("M");
+    @NotNull
+    public static List<PostgreDependency> readDependencies(
+        @Nullable DBRProgressMonitor monitor,
+        @NotNull PostgreObject object,
+        @NotNull boolean dependents
+    ) throws DBCException {
+        boolean isMMode = ((GaussDBDatabase) object.getDatabase())
+            .getDatabaseCompatibleMode().equals(GaussdbConstants.GAUSSDB_M_COMPATIBLE_MODE);
+
         List<PostgreDependency> dependencies = new ArrayList<>();
         try (JDBCSession session = DBUtils.openMetaSession(monitor, object, "Load object dependencies")) {
             String queryObjId = dependents ? "objid" : "refobjid";
             String condObjId = dependents ? "refobjid" : "objid";
-            try (JDBCPreparedStatement dbStat = session.prepareStatement(
-                "SELECT DISTINCT dep.deptype, dep.classid, dep." + queryObjId +
-                        ", cl.relkind, attr.attname,pg_get_expr(ad.adbin, ad.adrelid) adefval,\n" +
+
+            String sql =
+                "SELECT DISTINCT dep.deptype, dep.classid, dep." + queryObjId + ", cl.relkind, attr.attname," +
+                    " pg_get_expr(ad.adbin, ad.adrelid) adefval,\n" +
                     "    CASE WHEN cl.relkind IS NOT NULL THEN cl.relkind::text || COALESCE(dep.objsubid::text, '')::text\n" +
                     "        WHEN tg.oid IS NOT NULL THEN 'T'::text\n" +
                     "        WHEN ty.oid IS NOT NULL THEN 'y'::text\n" +
@@ -61,21 +71,9 @@ public class GaussDBDependency extends PostgreDependency {
                     "        WHEN rw.oid IS NOT NULL THEN 'R'::text\n" +
                     "        WHEN co.oid IS NOT NULL THEN 'C'::text || contype::text\n" +
                     "        WHEN ad.oid IS NOT NULL THEN 'A'::text\n" +
-                    "        ELSE ''\n" +
-                    "    END AS type,\n" +
-                    (isMMode ?
-                    "    COALESCE(coc.relname::text, clrw.relname::text, tgr.relname::text) AS ownertable,\n" +
-                    "    CASE WHEN cl.relname IS NOT NULL AND att.attname IS NOT NULL THEN CONCAT(cl.relname, '.', att.attname)::text\n" +
-                    "    ELSE COALESCE(cl.relname::text, co.conname::text, pr.proname::text, tg.tgname::text, ty.typname::text," +
-                            " la.lanname::text, rw.rulename::text, ns.nspname::text)\n" +
-                    "    END AS refname,\n" +
-                    "    COALESCE(nsc.nspname::text, nso.nspname::text, nsp.nspname::text, nst.nspname::text, " +
-                            "nsrw.nspname::text, tgrn.nspname::text) AS nspname\n" :
-                    "    COALESCE(coc.relname, clrw.relname, tgr.relname) AS ownertable,\n" +
-                    "    CASE WHEN cl.relname IS NOT NULL AND att.attname IS NOT NULL THEN cl.relname || '.' || att.attname\n" +
-                    "    ELSE COALESCE(cl.relname, co.conname, pr.proname, tg.tgname, ty.typname, la.lanname, rw.rulename, ns.nspname)\n" +
-                    "    END AS refname,\n" +
-                    "    COALESCE(nsc.nspname, nso.nspname, nsp.nspname, nst.nspname, nsrw.nspname, tgrn.nspname) AS nspname\n") +
+                    "        ELSE '' END AS type"
+                    + ",\n" +
+                    buildModeSpecificSelect(isMMode) +
                     "FROM pg_depend dep\n" +
                     "LEFT JOIN pg_class cl ON dep." + queryObjId + "=cl.oid\n" +
                     "LEFT JOIN pg_attribute att ON dep." + queryObjId + "=att.attrelid AND dep.objsubid=att.attnum\n" +
@@ -98,7 +96,9 @@ public class GaussDBDependency extends PostgreDependency {
                     "LEFT JOIN pg_attrdef ad ON ad.oid=dep." + queryObjId + "\n" +
                     "LEFT JOIN pg_attribute attr ON attr.attrelid=ad.adrelid and attr.attnum=ad.adnum\n" +
                     "WHERE dep." + condObjId + "=?\n" +
-                        "ORDER BY type")) {
+                    "ORDER BY type";
+
+            try (JDBCPreparedStatement dbStat = session.prepareStatement(sql)) {
                 dbStat.setLong(1, object.getObjectId());
                 try (JDBCResultSet dbResult = dbStat.executeQuery()) {
                     while (dbResult.next()) {
@@ -117,7 +117,8 @@ public class GaussDBDependency extends PostgreDependency {
                             objDesc,
                             JDBCUtils.safeGetString(dbResult, "type"),
                             tableName,
-                            schemaName);
+                            schemaName
+                        );
                         dependencies.add(dependency);
                     }
                 }
@@ -129,4 +130,23 @@ public class GaussDBDependency extends PostgreDependency {
         return dependencies;
     }
 
+    private static String buildModeSpecificSelect(boolean isMMode) {
+        if (isMMode) {
+            return "    COALESCE(coc.relname::text, clrw.relname::text, tgr.relname::text) AS ownertable,\n" +
+                "    CASE WHEN cl.relname IS NOT NULL AND att.attname IS NOT NULL " +
+                "THEN CONCAT(cl.relname, '.', att.attname)::text\n" +
+                "    ELSE COALESCE(cl.relname::text, co.conname::text, pr.proname::text, tg.tgname::text, " +
+                "ty.typname::text, la.lanname::text, rw.rulename::text, ns.nspname::text) END AS refname,\n" +
+                "    COALESCE(nsc.nspname::text, nso.nspname::text, nsp.nspname::text, nst.nspname::text, " +
+                "nsrw.nspname::text, tgrn.nspname::text) AS nspname\n";
+        } else {
+            return "    COALESCE(coc.relname, clrw.relname, tgr.relname) AS ownertable,\n" +
+                "    CASE WHEN cl.relname IS NOT NULL AND att.attname IS NOT NULL " +
+                "THEN cl.relname || '.' || att.attname\n" +
+                "    ELSE COALESCE(cl.relname, co.conname, pr.proname, tg.tgname, ty.typname, " +
+                "la.lanname, rw.rulename, ns.nspname) END AS refname,\n" +
+                "    COALESCE(nsc.nspname, nso.nspname, nsp.nspname, nst.nspname, " +
+                "nsrw.nspname, tgrn.nspname) AS nspname\n";
+        }
+    }
 }
