@@ -137,7 +137,7 @@ public class GaussDBDialect extends PostgreDialect {
 
     @Override
     @NotNull
-    public String getQuotedIdentifier(@NotNull String str,@Nullable boolean forceCaseSensitive,@Nullable boolean forceQuotes) {
+    public String getQuotedIdentifier(@NotNull String str, @Nullable boolean forceCaseSensitive, @Nullable boolean forceQuotes) {
         if (isQuotedIdentifier(str)) {
             // Already quoted
             return str;

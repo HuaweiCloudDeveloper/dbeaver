@@ -53,7 +53,7 @@ import java.util.Locale;
  *
  * @author Acewuye 2025/03/14
  *
- * Notes: Fix the issue of automatic input synchronization on the GaussDB connection management page.
+ *     Notes: Fix the issue of automatic input synchronization on the GaussDB connection management page.
  */
 public class GaussDBConnectionPage extends ConnectionPageWithAuth implements IDialogPageProvider {
 
