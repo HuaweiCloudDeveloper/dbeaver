@@ -204,7 +204,7 @@ public class GaussDBSchema extends PostgreSchema {
 
         @NotNull
         @Override
-        protected JDBCStatement prepareObjectsStatement(@Nullable JDBCSession session,@Nullable PostgreTableContainer container,
+        protected JDBCStatement prepareObjectsStatement(@Nullable JDBCSession session, @Nullable PostgreTableContainer container,
                                                         @Nullable PostgreTableBase forParent) throws SQLException {
             StringBuilder sql = new StringBuilder(
                 "SELECT c.oid,c.*,t.relname as tabrelname,rt.relnamespace as refnamespace,d.description" +
@@ -238,7 +238,9 @@ public class GaussDBSchema extends PostgreSchema {
 
         @NotNull
         @Override
-        protected JDBCStatement prepareObjectsStatement(@Nullable JDBCSession session,@Nullable PostgreTableContainer container,@Nullable PostgreTableBase forTable)
+        protected JDBCStatement prepareObjectsStatement(@Nullable JDBCSession session,
+                                                        @Nullable PostgreTableContainer container,
+                                                        @Nullable PostgreTableBase forTable)
                 throws SQLException {
             boolean supportsExprIndex = getDataSource().isServerVersionAtLeast(7, 4);
             StringBuilder sql = new StringBuilder();

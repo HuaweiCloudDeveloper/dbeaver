@@ -22,28 +22,29 @@ public enum DBCompatibilityEnum {
     ORACLE("Oracle", "A", "ORA"), MYSQL("MySQL", "M", "MYSQL"), TEDATA("Teradata", "C", "TD"), POSTGRES("PostgreSQL", "PG", "PG");
 
     private final String text;
-    private final String cValue;
-    private final String dValue;
+    private final String cvalue;
+    private final String dvalue;
 
     /**
      * Instantiates a new DBCompatibility enum.
-     * 
+     *
+
      * @param text
      *            the text
-     * @param cValue
-     *            the cValue
-     * @param dValue
-     *            the dValue
+     * @param cvalue
+     *            the cvalue
+     * @param dvalue
+     *            the dvalue
      */
-    private DBCompatibilityEnum(String text, String cValue, String dValue) {
+    private DBCompatibilityEnum(String text, String cvalue, String dvalue) {
         this.text = text;
-        this.cValue = cValue;
-        this.dValue = dValue;
+        this.cvalue = cvalue;
+        this.dvalue = dvalue;
     }
 
     /**
      * Gets text.
-     * 
+
      * @return the text
      */
     public String getText() {
@@ -52,27 +53,28 @@ public enum DBCompatibilityEnum {
 
     /**
      * Gets Centralized value.
-     * 
-     * @return the cValue
+
+     * @return the cvalue
      */
     public String getcValue() {
-        return cValue;
+        return cvalue;
     }
 
     /**
      * Gets Distributed value.
-     * 
+
      * @return the dValue
      */
     public String getdValue() {
-        return dValue;
+        return dvalue;
     }
 
     /**
      * Gets DBCompatibilityEnum by text.
-     * 
+
      * @param text
      *            the text
+
      * @return the DBCompatibilityEnum
      */
     public static DBCompatibilityEnum of(String text) {
@@ -87,15 +89,15 @@ public enum DBCompatibilityEnum {
 
     /**
      * Query DBCompatibilityEnum text by value.
-     * 
-     * @param cValue
-     *            or dValue
+
+     * @param cvalue
+     *            or dvalue
      * @return the DBCompatibilityEnum text
      */
     public static String queryTextByValue(String value) {
         DBCompatibilityEnum[] enums = values();
         for (DBCompatibilityEnum e : enums) {
-            if (e.cValue.equalsIgnoreCase(value) || e.dValue.equalsIgnoreCase(value)) {
+            if (e.cvalue.equalsIgnoreCase(value) || e.dvalue.equalsIgnoreCase(value)) {
                 return e.text;
             }
         }
