@@ -14,13 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jkiss.dbeaver.model.ai.registry;
+package org.jkiss.dbeaver.model.ai;
 
-import org.jkiss.code.NotNull;
+import org.jkiss.dbeaver.model.ai.engine.AIEngineResponseChunk;
+
+import java.util.concurrent.Flow;
 
 /**
- * AI settings listener.
+ * AI stream publisher.
+ * Basically just a classic publisher.
  */
-public interface AISettingsEventListener {
-    void onSettingsUpdate(@NotNull AISettingsManager registry);
+public interface AIStreamPublisher extends Flow.Publisher<AIEngineResponseChunk> {
+
+
 }
