@@ -568,7 +568,7 @@ public class DataSourceProviderRegistry implements DBPDataSourceProviderRegistry
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             XMLBuilder xml = new XMLBuilder(baos, GeneralUtils.UTF8_ENCODING);
-            xml.setButify(true);
+            xml.setBeautify(true);
             xml.startElement(RegistryConstants.TAG_TYPES);
             for (DBPConnectionType connectionType : connectionTypes.values()) {
                 xml.startElement(RegistryConstants.TAG_TYPE);
