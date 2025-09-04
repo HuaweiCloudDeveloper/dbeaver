@@ -32,6 +32,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.jkiss.dbeaver.DBException;
+import org.jkiss.dbeaver.ext.gaussdb.model.DBCompatibilityEnum;
 import org.jkiss.dbeaver.ext.gaussdb.model.GaussDBDataSource;
 import org.jkiss.dbeaver.ext.postgresql.PostgreMessages;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreCharset;
@@ -87,15 +88,7 @@ public class GaussDBCreateDatabaseDialog extends BaseDialog {
         supportsEncodings(supportsEncodings, groupDefinition);
         supportsTablespaces(supportsTablespaces, groupDefinition);
 
-        dbCompatibleMode = UIUtils.createLabelCombo(groupDefinition, "DataBase Compatibility Mode",
-            SWT.BORDER | SWT.DROP_DOWN | SWT.READ_ONLY);
-        dbCompatibleMode.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                compatibleMode = dbCompatibleMode.getText();
-            }
-        });
-
+        supportsCompatibleMode(groupDefinition);
         scheduleLoadUsersJob(supportsRoles, supportsEncodings, supportsTablespaces);
 
         return composite;
@@ -164,6 +157,25 @@ public class GaussDBCreateDatabaseDialog extends BaseDialog {
                 tablespaceCombo.setText(defTablespace.getName());
             }
         }
+    }
+
+    private void supportsCompatibleMode(final Composite groupDefinition) {
+        dbCompatibleMode = UIUtils.createLabelCombo(groupDefinition, "DataBase Compatibility Mode",
+            SWT.BORDER | SWT.DROP_DOWN | SWT.READ_ONLY);
+        DBCompatibilityEnum[] compatibilityModes = DBCompatibilityEnum.values();
+        for (DBCompatibilityEnum mode : compatibilityModes) {
+            dbCompatibleMode.add(mode.getcValue());
+        }
+        if (compatibilityModes.length > 0) {
+            dbCompatibleMode.select(0);
+            compatibleMode = dbCompatibleMode.getText();
+        }
+        dbCompatibleMode.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                compatibleMode = dbCompatibleMode.getText();
+            }
+        });
     }
 
     private void supportsTablespaces(boolean supportsTablespaces, final Composite groupDefinition) {
