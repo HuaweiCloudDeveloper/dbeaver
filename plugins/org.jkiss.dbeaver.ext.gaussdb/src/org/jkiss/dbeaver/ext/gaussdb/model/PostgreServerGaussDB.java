@@ -81,6 +81,8 @@ public class PostgreServerGaussDB extends PostgreServerExtensionBase {
     public PostgreTableBase createRelationOfClass(PostgreSchema schema, PostgreClass.RelKind kind, JDBCResultSet dbResult) {
         if (kind == PostgreClass.RelKind.S) {
             return new GaussDBSequence(schema, dbResult);
+        } else if (kind == PostgreClass.RelKind.r) {
+            return new GaussDBTableRegular(schema, dbResult);
         }
         return super.createRelationOfClass(schema, kind, dbResult);
     }

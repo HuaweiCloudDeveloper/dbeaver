@@ -89,7 +89,7 @@ public class PostgreSchema implements
     private final ConstraintCache constraintCache;
     private final ProceduresCache proceduresCache;
     private final IndexCache indexCache;
-    private final PostgreDataTypeCache dataTypeCache;
+    protected PostgreDataTypeCache dataTypeCache;
     private ArrayList<PostgrePrivilege> defaultPrivileges;
     protected volatile boolean hasStatistics;
 
@@ -1079,7 +1079,7 @@ public class PostgreSchema implements
     /**
      * Index cache implementation
      */
-    class IndexCache extends JDBCCompositeCache<PostgreTableContainer, PostgreTableBase, PostgreIndex, PostgreIndexColumn> {
+    public class IndexCache extends JDBCCompositeCache<PostgreTableContainer, PostgreTableBase, PostgreIndex, PostgreIndexColumn> {
         protected IndexCache() {
             super(getTableCache(), PostgreTableBase.class, "tabrelname", "relname");
         }

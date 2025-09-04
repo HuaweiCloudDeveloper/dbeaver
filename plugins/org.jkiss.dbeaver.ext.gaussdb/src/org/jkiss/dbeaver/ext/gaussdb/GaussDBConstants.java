@@ -18,4 +18,5 @@ package org.jkiss.dbeaver.ext.gaussdb;
 
 public class GaussDBConstants {
     public static final String GAUSSDB_PG_OBJECT_CLASS = "com.huawei.gaussdb.jdbc.util.PGobject";
+    public static final String GAUSSDB_M_COMPATIBLE_MODE = "M";
 }

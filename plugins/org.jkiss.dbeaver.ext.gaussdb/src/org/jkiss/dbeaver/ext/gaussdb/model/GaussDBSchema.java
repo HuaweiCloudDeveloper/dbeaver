@@ -18,6 +18,7 @@
 package org.jkiss.dbeaver.ext.gaussdb.model;
 
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -25,11 +26,8 @@ import java.util.stream.Collectors;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
-import org.jkiss.dbeaver.ext.postgresql.model.PostgreDatabase;
-import org.jkiss.dbeaver.ext.postgresql.model.PostgreProcedureKind;
-import org.jkiss.dbeaver.ext.postgresql.model.PostgreRole;
-import org.jkiss.dbeaver.ext.postgresql.model.PostgreSchema;
-import org.jkiss.dbeaver.ext.postgresql.model.PostgreServerExtension;
+import org.jkiss.dbeaver.ext.gaussdb.GaussDBConstants;
+import org.jkiss.dbeaver.ext.postgresql.model.*;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCPreparedStatement;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCResultSet;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCSession;
@@ -44,19 +42,27 @@ public class GaussDBSchema extends PostgreSchema {
     public final PackageCache packageCache;
     private final ProceduresCache proceduresCache;
     private final FunctionsCache functionsCache;
+    private final ConstraintCache constraintCache;
+    private final IndexCache indexCache;
 
     public GaussDBSchema(PostgreDatabase owner, String name, JDBCResultSet resultSet) throws SQLException {
         super(owner, name, resultSet);
+        dataTypeCache = new GaussDBDataTypeCache();
         this.packageCache = new PackageCache();
         this.proceduresCache = new ProceduresCache();
         this.functionsCache = new FunctionsCache();
+        this.constraintCache = new ConstraintCache();
+        this.indexCache = owner.getDataSource().getServerType().supportsIndexes() ? new IndexCache() : null;
     }
 
     public GaussDBSchema(PostgreDatabase database, String name, PostgreRole owner) {
         super(database, name, owner);
+        dataTypeCache = new GaussDBDataTypeCache();
         this.packageCache = new PackageCache();
         this.proceduresCache = new ProceduresCache();
         this.functionsCache = new FunctionsCache();
+        this.constraintCache = new ConstraintCache();
+        this.indexCache = database.getDataSource().getServerType().supportsIndexes() ? new IndexCache() : null;
     }
 
     @Override
@@ -104,7 +110,7 @@ public class GaussDBSchema extends PostgreSchema {
         @NotNull
         @Override
         protected JDBCStatement prepareObjectsStatement(@NotNull JDBCSession session,
-            @NotNull GaussDBSchema owner) throws SQLException {
+            @Nullable GaussDBSchema owner) throws SQLException {
             final JDBCPreparedStatement dbStat = session
                 .prepareStatement("select g.oid, g.pkgnamespace, g.pkgname as name from gs_package g where g.pkgnamespace = ?");
             dbStat.setLong(1, GaussDBSchema.this.getObjectId());
@@ -182,5 +188,112 @@ public class GaussDBSchema extends PostgreSchema {
             return new GaussDBFunction(session.getProgressMonitor(), owner, dbResult);
         }
 
+    }
+
+    public class ConstraintCache extends PostgreSchema.ConstraintCache {
+        protected ConstraintCache() {}
+
+        @NotNull
+        @Override
+        protected JDBCStatement prepareObjectsStatement(@Nullable JDBCSession session, @Nullable PostgreTableContainer container,
+                                                        @Nullable PostgreTableBase forParent) throws SQLException {
+            StringBuilder sql = new StringBuilder(
+                "SELECT c.oid,c.*,t.relname as tabrelname,rt.relnamespace as refnamespace,d.description" +
+                    (!getDataSource().getServerType().supportsPGConstraintExpressionColumn() ? ", null as consrc_copy" :
+                    ", case when c.contype='c' then " + (isMMode(container) ? "substring" : "\"substring\"") +
+                        "(pg_get_constraintdef(c.oid), 7) else null end consrc_copy") +
+                    "\nFROM pg_catalog.pg_constraint c" +
+                    "\nINNER JOIN pg_catalog.pg_class t ON t.oid=c.conrelid" +
+                    "\nLEFT OUTER JOIN pg_catalog.pg_class rt ON rt.oid=c.confrelid" +
+                    "\nLEFT OUTER JOIN " +
+                        "pg_catalog.pg_description d ON d.objoid=c.oid AND d.objsubid=0 AND d.classoid='pg_constraint'::regclass" +
+                    "\nWHERE ");
+            if (forParent == null) {
+                sql.append("t.relnamespace=?");
+            } else {
+                sql.append("c.conrelid=?");
+            }
+            sql.append("\nORDER BY c.oid");
+            JDBCPreparedStatement dbStat = session.prepareStatement(sql.toString());
+            if (forParent == null) {
+                dbStat.setLong(1, container.getSchema().getObjectId());
+            } else {
+                dbStat.setLong(1, forParent.getObjectId());
+            }
+            return dbStat;
+        }
+    }
+
+    public class IndexCache extends PostgreSchema.IndexCache {
+        protected IndexCache() {}
+
+        @NotNull
+        @Override
+        protected JDBCStatement prepareObjectsStatement(@Nullable JDBCSession session,
+                                                        @Nullable PostgreTableContainer container,
+                                                        @Nullable PostgreTableBase forTable)
+                throws SQLException {
+            boolean supportsExprIndex = getDataSource().isServerVersionAtLeast(7, 4);
+            StringBuilder sql = new StringBuilder();
+            sql.append(
+                "SELECT i.*,i.indkey as " + (isMMode(container) ? "\"keys\"" : "keys") + ",c.relname,c.relnamespace,c.relam," +
+                    "c.reltablespace,tc.relname " +
+                    "as tabrelname,dsc.description");
+            if (supportsExprIndex) {
+                sql.append(",pg_catalog.pg_get_expr(i.indpred, i.indrelid) as pred_expr");
+                sql.append(",pg_catalog.pg_get_expr(i.indexprs, i.indrelid, true) as expr");
+            }
+            if (getDataSource().getServerType().supportsRelationSizeCalc()) {
+                sql.append(",pg_catalog.pg_relation_size(i.indexrelid) as index_rel_size");
+                sql.append(",pg_catalog.pg_stat_get_numscans(i.indexrelid) as index_num_scans");
+            }
+            sql.append(
+                "\nFROM pg_catalog.pg_index i" +
+                    "\nINNER JOIN pg_catalog.pg_class c ON c.oid=i.indexrelid" +
+                    "\nINNER JOIN pg_catalog.pg_class tc ON tc.oid=i.indrelid" +
+                    "\nLEFT OUTER JOIN pg_catalog.pg_description dsc ON i.indexrelid=dsc.objoid" +
+                    "\nWHERE ");
+            if (forTable != null) {
+                sql.append(" i.indrelid=?");
+            } else {
+                sql.append(" c.relnamespace=?");
+            }
+            //sql.append(" AND NOT i.indisprimary");
+            sql.append(" ORDER BY tabrelname, c.relname");
+
+            JDBCPreparedStatement dbStat = session.prepareStatement(sql.toString());
+            if (forTable != null) {
+                dbStat.setLong(1, forTable.getObjectId());
+            } else {
+                dbStat.setLong(1, GaussDBSchema.this.getObjectId());
+            }
+            return dbStat;
+        }
+    }
+
+    @Override
+    public ConstraintCache getConstraintCache() {
+        return this.constraintCache;
+    }
+
+    @Nullable
+    @Override
+    public IndexCache getIndexCache() {
+        return indexCache;
+    }
+
+    @Override
+    public List<PostgreIndex> getIndexes(@NotNull DBRProgressMonitor monitor, @Nullable PostgreTableBase parent) throws DBException {
+        if (indexCache == null) {
+            return Collections.emptyList();
+        }
+        return indexCache.getObjects(monitor, this, parent);
+    }
+
+    @NotNull
+    private boolean isMMode(@NotNull PostgreTableContainer tableContainer) {
+        GaussDBDatabase database = (GaussDBDatabase) tableContainer.getDatabase();
+        String compatibilityMode = database.getDatabaseCompatibleMode();
+        return GaussDBConstants.GAUSSDB_M_COMPATIBLE_MODE.equals(compatibilityMode);
     }
 }
