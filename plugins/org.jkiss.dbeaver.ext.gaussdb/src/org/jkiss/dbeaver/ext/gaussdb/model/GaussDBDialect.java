@@ -21,25 +21,50 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.jkiss.code.NotNull;
+import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.ModelPreferences;
+import org.jkiss.dbeaver.ext.gaussdb.GaussDBConstants;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDialect;
 import org.jkiss.dbeaver.model.DBPDataSource;
 import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.model.struct.rdb.DBSProcedure;
 import org.jkiss.dbeaver.model.struct.rdb.DBSProcedureParameter;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
+import org.jkiss.utils.ArrayUtils;
 import org.jkiss.utils.CommonUtils;
 
 public class GaussDBDialect extends PostgreDialect {
+
+    private GaussDBDataSource dataSource;
+
+    public static final String[][] MYSQL_QUOTE_STRINGS = {
+        {"`", "`"},
+        {"\"", "\""},
+    };
+
+    public void setDataSource(GaussDBDataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
+    public GaussDBDataSource getDataSource() {
+        return dataSource;
+    }
 
     @Override
     public boolean isDelimiterAfterBlock() {
         return true;
     }
 
+    @Nullable
+    @Override
+    public String[][] getIdentifierQuoteStrings() {
+        return DEFAULT_IDENTIFIER_QUOTES;
+    }
+
     @Override
     public void generateStoredProcedureCall(StringBuilder sql, DBSProcedure proc,
-        Collection<? extends DBSProcedureParameter> parameters, boolean castParams) {
+                                            Collection<? extends DBSProcedureParameter> parameters, boolean castParams) {
         List<DBSProcedureParameter> inParameters = new ArrayList<>();
         if (parameters != null) {
             inParameters.addAll(parameters);
@@ -53,8 +78,9 @@ public class GaussDBDialect extends PostgreDialect {
         }
         String namedParameterPrefix = prefStore.getString(ModelPreferences.SQL_NAMED_PARAMETERS_PREFIX);
         boolean useBrackets = useBracketsForExec(proc);
-        if (useBrackets)
+        if (useBrackets) {
             sql.append("{ ");
+        }
         sql.append(getStoredProcedureCallInitialClause(proc)).append("(");
         if (!inParameters.isEmpty()) {
             inParametersProc(sql, castParams, inParameters, namedParameterPrefix);
@@ -73,7 +99,7 @@ public class GaussDBDialect extends PostgreDialect {
     }
 
     private void inParametersProc(StringBuilder sql, boolean castParams, List<DBSProcedureParameter> inParameters,
-        String namedParameterPrefix) {
+                                  String namedParameterPrefix) {
         boolean first = true;
         for (DBSProcedureParameter parameter : inParameters) {
             String typeName = parameter.getParameterType().getFullTypeName();
@@ -107,6 +133,36 @@ public class GaussDBDialect extends PostgreDialect {
                 break;
             }
             first = false;
+        }
+    }
+
+    @Override
+    @NotNull
+    public String getQuotedIdentifier(@NotNull String str, @Nullable boolean forceCaseSensitive, @Nullable boolean forceQuotes) {
+        if (isQuotedIdentifier(str)) {
+            // Already quoted
+            return str;
+        }
+        String[][] quoteStrings;
+        String databaseCompatibleMode = "";
+        boolean effectiveForceCaseSensitive = forceCaseSensitive;
+        GaussDBDataSource dataSource = getDataSource();
+        databaseCompatibleMode = ((GaussDBDatabase) dataSource.getDefaultInstance()).getDatabaseCompatibleMode();
+        if (!databaseCompatibleMode.isEmpty() && GaussDBConstants.GAUSSDB_M_COMPATIBLE_MODE.equals(databaseCompatibleMode)) {
+            quoteStrings = this.MYSQL_QUOTE_STRINGS;
+            effectiveForceCaseSensitive = false;
+        } else {
+            quoteStrings = this.getIdentifierQuoteStrings();
+        }
+
+        if (ArrayUtils.isEmpty(quoteStrings)) {
+            return str;
+        }
+
+        if (mustBeQuoted(str, effectiveForceCaseSensitive) || forceQuotes) {
+            return quoteIdentifier(str, quoteStrings);
+        } else {
+            return str;
         }
     }
 }
