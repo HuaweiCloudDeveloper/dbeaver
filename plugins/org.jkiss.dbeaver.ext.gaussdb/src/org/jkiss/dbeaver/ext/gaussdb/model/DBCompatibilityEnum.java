@@ -19,7 +19,7 @@ package org.jkiss.dbeaver.ext.gaussdb.model;
 
 public enum DBCompatibilityEnum {
 
-    ORACLE("Oracle", "A", "ORA"), MYSQL("MySQL", "B", "MYSQL"), TEDATA("Teradata", "C", "TD"), POSTGRES("PostgreSQL", "PG", "PG");
+    ORACLE("Oracle", "A", "ORA"), MYSQL("MySQL", "M", "MYSQL"), TEDATA("Teradata", "C", "TD"), POSTGRES("PostgreSQL", "PG", "PG");
 
     private final String text;
     private final String cValue;

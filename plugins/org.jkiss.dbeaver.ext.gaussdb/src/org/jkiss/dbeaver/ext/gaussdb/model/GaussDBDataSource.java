@@ -31,9 +31,10 @@ import java.sql.ResultSet;
 public class GaussDBDataSource extends PostgreDataSource {
 
     private PostgreServerExtension serverExtension;
-    
+
     public GaussDBDataSource(DBRProgressMonitor monitor, DBPDataSourceContainer container) throws DBException {
         super(monitor, container, new GaussDBDialect());
+        ((GaussDBDialect) getSQLDialect()).setDataSource(this);
     }
 
     @Override
@@ -56,7 +57,7 @@ public class GaussDBDataSource extends PostgreDataSource {
     @NotNull
     @Override
     public GaussDBDatabase createDatabaseImpl(DBRProgressMonitor monitor, String name, PostgreRole owner, String templateName,
-        PostgreTablespace tablespace, PostgreCharset encoding) throws DBException {
+                                              PostgreTablespace tablespace, PostgreCharset encoding) throws DBException {
         return new GaussDBDatabase(monitor, this, name, owner, templateName, tablespace, encoding);
     }
 
@@ -72,7 +73,7 @@ public class GaussDBDataSource extends PostgreDataSource {
         // Reserved: Modify the logic for determining the PG version.
         return super.isServerVersionAtLeast(major, minor);
     }
-    
+
     @Override
     public PostgreServerExtension getServerType() {
         if (serverExtension == null) {
