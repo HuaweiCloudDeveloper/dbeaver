@@ -99,7 +99,7 @@ public class PostgreDatabase extends JDBCRemoteInstance
     private final AvailableExtensionCache availableExtensionCache = new AvailableExtensionCache();
     private final CollationCache collationCache = new CollationCache();
     public final TablespaceCache tablespaceCache = new TablespaceCache();
-    private final LongKeyMap<PostgreDataType> dataTypeCache = new LongKeyMap<>();
+    protected final LongKeyMap<PostgreDataType> dataTypeCache = new LongKeyMap<>();
     public final JobCache jobCache = new JobCache();
     public final JobClassCache jobClassCache = new JobClassCache();
 
@@ -236,8 +236,9 @@ public class PostgreDatabase extends JDBCRemoteInstance
         if (!isSharedDatabase() && executionContext == null) {
             initializeMainContext(monitor);
             initializeMetaContext(monitor);
-            if (cacheMetadata)
+            if (cacheMetadata) {
                 cacheDataTypes(monitor, true);
+            }
         }
     }
 
@@ -678,7 +679,7 @@ public class PostgreDatabase extends JDBCRemoteInstance
     }
 
     @Nullable
-    PostgreSchema getCatalogSchema() {
+    protected PostgreSchema getCatalogSchema() {
         return schemaCache.getCachedObject(PostgreConstants.CATALOG_SCHEMA_NAME);
     }
 
@@ -692,7 +693,11 @@ public class PostgreDatabase extends JDBCRemoteInstance
         return schemaCache.getCachedObject(PostgreConstants.PUBLIC_SCHEMA_NAME);
     }
 
-    void cacheDataTypes(DBRProgressMonitor monitor, boolean forceRefresh) throws DBException {
+    protected String getBaseTypeNameClause() {
+        return PostgreDataTypeCache.getBaseTypeNameClause((PostgreDataSource) dataSource);
+    }
+
+    protected void cacheDataTypes(DBRProgressMonitor monitor, boolean forceRefresh) throws DBException {
         boolean hasDataTypes;
         synchronized (dataTypeCache) {
             hasDataTypes = !dataTypeCache.isEmpty();
@@ -710,7 +715,7 @@ public class PostgreDatabase extends JDBCRemoteInstance
             try (JDBCSession session = DBUtils.openMetaSession(monitor, this, "Read data types")) {
                 StringBuilder sql = new StringBuilder(256);
                 boolean supportsSysTypColumn = supportsSysTypCategoryColumn(session); // Do not read all array and table types, unless the user has decided otherwise
-                sql.append("SELECT t.oid,t.*,c.relkind,").append(PostgreDataTypeCache.getBaseTypeNameClause(postgreDataSource)).append(", d.description" +
+                sql.append("SELECT t.oid,t.*,c.relkind,").append(getBaseTypeNameClause()).append(", d.description" +
                         "\nFROM pg_catalog.pg_type t");
                 if (!readAllTypes && supportsSysTypColumn) {
                     sql.append("\nLEFT OUTER JOIN pg_catalog.pg_type et ON et.oid=t.typelem "); // If typelem is not 0 then it identifies another row in pg_type
@@ -763,7 +768,7 @@ public class PostgreDatabase extends JDBCRemoteInstance
 
     // Column "typcategory" appeared only in PG version 8.4 and before we relied on DB version to verify the conditions, but it was not the most universal solution.
     // So make a separate request to the database for checking.
-    boolean supportsSysTypCategoryColumn(JDBCSession session) {
+    public boolean supportsSysTypCategoryColumn(JDBCSession session) {
         if (supportTypColumn == null) {
             if (!dataSource.isServerVersionAtLeast(10, 0)) {
                 if (!dataSource.isServerVersionAtLeast(8, 4)) {
@@ -970,7 +975,8 @@ public class PostgreDatabase extends JDBCRemoteInstance
         }
     }
 
-    public PostgreDataType getDataType(@Nullable DBRProgressMonitor monitor, String typeName) {
+    @Nullable
+    public PostgreDataType getDataType(@Nullable DBRProgressMonitor monitor, @Nullable String typeName) {
         if (typeName.endsWith("[]")) {
             // In some cases ResultSetMetadata returns it as []
             typeName = "_" + typeName.substring(0, typeName.length() - 2);
@@ -1009,7 +1015,7 @@ public class PostgreDatabase extends JDBCRemoteInstance
             }
         }
 
-        if (monitor == null || monitor.isForceCacheUsage()) {
+        if (monitor.isForceCacheUsage()) {
             return null;
         }
 

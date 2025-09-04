@@ -46,7 +46,7 @@ public class PostgreDataTypeCache extends JDBCObjectCache<PostgreSchema, Postgre
 
     private final LongKeyMap<PostgreDataType> dataTypeMap = new LongKeyMap<>();
 
-    PostgreDataTypeCache() {
+    protected PostgreDataTypeCache() {
         setListOrderComparator(DBUtils.nameComparator());
         setCaseSensitive(false);
     }
