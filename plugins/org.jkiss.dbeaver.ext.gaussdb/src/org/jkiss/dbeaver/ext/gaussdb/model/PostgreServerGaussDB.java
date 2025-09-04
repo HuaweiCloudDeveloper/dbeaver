@@ -18,10 +18,17 @@
 package org.jkiss.dbeaver.ext.gaussdb.model;
 
 import org.jkiss.code.NotNull;
+import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.ext.gaussdb.GaussDBConstants;
+import org.jkiss.dbeaver.ext.postgresql.model.PostgreClass;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDataSource;
 import org.jkiss.dbeaver.ext.postgresql.model.PostgreDatabase;
+import org.jkiss.dbeaver.ext.postgresql.model.PostgreSchema;
+import org.jkiss.dbeaver.ext.postgresql.model.PostgreSequence;
+import org.jkiss.dbeaver.ext.postgresql.model.PostgreTableBase;
 import org.jkiss.dbeaver.ext.postgresql.model.impls.PostgreServerExtensionBase;
+import org.jkiss.dbeaver.model.exec.jdbc.JDBCResultSet;
+import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 
 public class PostgreServerGaussDB extends PostgreServerExtensionBase {
 
@@ -63,6 +70,28 @@ public class PostgreServerGaussDB extends PostgreServerExtensionBase {
     @Override
     public PostgreDatabase.SchemaCache createSchemaCache(PostgreDatabase database) {
         return new GaussDBSchemaCache();
+    }
+
+    @Override
+    public PostgreSequence createSequence(@NotNull PostgreSchema schema) {
+        return new GaussDBSequence(schema);
+    }
+
+    @Override
+    public PostgreTableBase createRelationOfClass(PostgreSchema schema, PostgreClass.RelKind kind, JDBCResultSet dbResult) {
+        if (kind == PostgreClass.RelKind.S) {
+            return new GaussDBSequence(schema, dbResult);
+        }
+        return super.createRelationOfClass(schema, kind, dbResult);
+    }
+
+    @Override
+    public PostgreTableBase createNewRelation(DBRProgressMonitor monitor, PostgreSchema schema, PostgreClass.RelKind kind, Object copyFrom)
+            throws DBException {
+        if (kind == PostgreClass.RelKind.S) {
+            return new GaussDBSequence(schema);
+        }
+        return super.createNewRelation(monitor, schema, kind, copyFrom);
     }
 
     @Override
